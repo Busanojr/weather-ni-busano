@@ -3,635 +3,504 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CYBERWEATHER</title>
+<title>weather-WEATHER-LANG</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Exo+2:ital,wght@0,100;0,300;0,400;0,600;0,800;0,900;1,300&family=Syncopate:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-/* ═══════════════════════════════════════════════════════
-   ROOT & TOKENS
-═══════════════════════════════════════════════════════ */
+/* ═══════ ROOT ═══════ */
 :root {
-  --bg0: #030810;
-  --bg1: #060d18;
-  --bg2: #0a1420;
-  --bg3: #0e1c2e;
-  --panel: rgba(8,16,28,0.94);
-  --border: rgba(0,210,180,0.10);
-  --border-hot: rgba(255,90,30,0.22);
-  --border-glow: rgba(0,210,180,0.50);
-  --cyan: #00d4b4;
-  --cyan2: #00ffda;
-  --orange: #ff5a1e;
-  --orange2: #ffaa00;
-  --yellow: #f0c040;
-  --red: #ff2d55;
-  --blue: #22aaff;
-  --green: #2aff88;
-  --dim: rgba(0,212,180,0.30);
-  --text: #b8ddd4;
-  --text-dim: rgba(160,200,190,0.42);
-  --mono: 'Share Tech Mono', monospace;
-  --head: 'Orbitron', sans-serif;
-  --body: 'Rajdhani', sans-serif;
-  --radius: 3px;
-  --glow-cyan: 0 0 24px rgba(0,212,180,0.35), 0 0 80px rgba(0,212,180,0.10);
-  --glow-orange: 0 0 24px rgba(255,90,30,0.35), 0 0 80px rgba(255,90,30,0.10);
+  --bg0: #04060f;
+  --bg1: #070b18;
+  --panel: rgba(7,11,24,0.93);
+  --panel2: rgba(4,6,15,0.85);
+  --hot1: #ff3d00;
+  --hot2: #ff8c00;
+  --hot3: #ffcc02;
+  --hot-glow: rgba(255,61,0,0.45);
+  --cold1: #00c8ff;
+  --cold2: #0068ff;
+  --cold3: #a855f7;
+  --cold-glow: rgba(0,200,255,0.40);
+  --green: #00ff88;
+  --text: #d0e4f0;
+  --text-dim: rgba(180,210,230,0.38);
+  --border: rgba(0,200,255,0.10);
+  --border-hot: rgba(255,61,0,0.18);
+  --mono: 'Space Mono', monospace;
+  --head: 'Syncopate', sans-serif;
+  --body: 'Exo 2', sans-serif;
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg0);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden;font-size:14px;}
 
-body {
-  background: var(--bg0);
-  color: var(--text);
-  font-family: var(--body);
-  font-size: 15px;
-  min-height: 100vh;
-  overflow-x: hidden;
+/* ═══════ AMBIENT BG ═══════ */
+.bg-layer{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.bg-grid{
+  background-image:linear-gradient(rgba(0,200,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.022) 1px,transparent 1px);
+  background-size:60px 60px;
 }
+.bg-hot-blob{position:fixed;pointer-events:none;z-index:0;border-radius:50%;filter:blur(120px);width:600px;height:600px;background:radial-gradient(circle,rgba(255,61,0,0.09),transparent 70%);top:-100px;right:-100px;animation:blob-drift-hot 12s ease-in-out infinite alternate;}
+.bg-cold-blob{position:fixed;pointer-events:none;z-index:0;border-radius:50%;filter:blur(130px);width:700px;height:700px;background:radial-gradient(circle,rgba(0,200,255,0.08),transparent 70%);bottom:-150px;left:-150px;animation:blob-drift-cold 14s ease-in-out infinite alternate;}
+@keyframes blob-drift-hot{0%{transform:translate(0,0) scale(1);}100%{transform:translate(40px,-60px) scale(1.1);}}
+@keyframes blob-drift-cold{0%{transform:translate(0,0) scale(1);}100%{transform:translate(-40px,60px) scale(1.12);}}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;z-index:200;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(0,200,255,0.6),transparent);animation:scan 9s linear infinite;opacity:0.3;}
+@keyframes scan{0%{top:0;}100%{top:100vh;}}
 
-/* ── GRID BG ── */
-body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background-image:
-    linear-gradient(rgba(0,210,180,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,210,180,0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+/* ═══════ BOOT SCREEN ═══════ */
+#boot-loader{
+  position:fixed;inset:0;z-index:9999;
+  background:#04060f;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:0;
+  transition:opacity .7s ease,visibility .7s ease;
 }
-body::after {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(0,100,85,0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 30% at 100% 100%, rgba(255,90,30,0.04) 0%, transparent 60%);
-}
+#boot-loader.fade-out{opacity:0;visibility:hidden;pointer-events:none;}
+.boot-bg-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,200,255,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.02) 1px,transparent 1px);background-size:60px 60px;}
+.boot-scanline{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,200,255,0.6),transparent);z-index:3;pointer-events:none;animation:scan 6s linear infinite;opacity:0.35;}
+.boot-center{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px;}
 
-/* ── SCROLLING SCANLINE ── */
-.scanline-sweep {
-  position: fixed; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0,212,180,0.55), transparent);
-  z-index: 200; pointer-events: none;
-  animation: sweep-y 7s linear infinite;
-  opacity: 0.45;
+/* ── FISHING CAT SCENE ── */
+.fishing-scene{
+  width:220px;height:200px;position:relative;
+  border:1.5px solid rgba(0,200,255,0.22);border-radius:12px;overflow:hidden;
+  box-shadow:0 0 40px rgba(0,200,255,0.18),0 0 80px rgba(0,200,255,0.06);
+  background:linear-gradient(180deg,#0a0f1e 0%,#0d1a2e 60%,#0a2040 100%);
+  animation:boot-glow 2.8s ease-in-out infinite;
 }
-@keyframes sweep-y { 0% { top: 0; } 100% { top: 100vh; } }
+@keyframes boot-glow{0%,100%{box-shadow:0 0 40px rgba(0,200,255,0.18),0 0 80px rgba(0,200,255,0.06);}50%{box-shadow:0 0 60px rgba(0,200,255,0.42),0 0 120px rgba(0,200,255,0.13);}}
 
-/* ═══════════════════════════════════════════════════════
-   TOPBAR
-═══════════════════════════════════════════════════════ */
-#topbar {
-  position: sticky; top: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 32px; height: 60px;
-  background: rgba(3,8,16,0.97);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(20px);
-}
-#topbar::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent 0%, var(--cyan) 30%, var(--orange) 70%, transparent 100%);
-  opacity: 0.22;
-}
-.logo { display: flex; align-items: center; gap: 16px; }
-.logo-icon {
-  width: 36px; height: 36px;
-  border: 1px solid var(--cyan); border-radius: 2px;
-  display: flex; align-items: center; justify-content: center;
-  position: relative; background: rgba(0,212,180,0.05);
-  animation: pulse-icon 3s ease-in-out infinite;
-}
-.logo-icon::before, .logo-icon::after {
-  content: ''; position: absolute;
-  width: 5px; height: 5px; border: 1px solid var(--cyan);
-}
-.logo-icon::before { top: -3px; left: -3px; border-right: none; border-bottom: none; }
-.logo-icon::after  { bottom: -3px; right: -3px; border-left: none; border-top: none; }
-@keyframes pulse-icon {
-  0%,100% { box-shadow: 0 0 10px rgba(0,212,180,0.3); }
-  50%      { box-shadow: 0 0 30px rgba(0,212,180,0.7), 0 0 60px rgba(0,212,180,0.2); }
-}
-.logo-icon svg { fill: var(--cyan); }
-.logo-text {
-  font-family: var(--head); font-size: 15px; font-weight: 900; letter-spacing: 4px;
-  color: var(--cyan); text-shadow: 0 0 20px rgba(0,212,180,0.5);
-}
-.logo-sub {
-  font-family: var(--mono); font-size: 9px;
-  color: var(--text-dim); letter-spacing: 2.5px; margin-top: 2px;
-}
-.topbar-right { display: flex; align-items: center; gap: 22px; }
-#uptime {
-  font-family: var(--mono); font-size: 14px; color: var(--cyan2);
-  letter-spacing: 2px; text-shadow: 0 0 12px rgba(0,255,218,0.4);
-}
-.conn-badge {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
-  padding: 5px 14px; border: 1px solid rgba(42,255,136,0.4);
-  border-radius: 2px; color: var(--green);
-  background: rgba(42,255,136,0.05);
-}
-.conn-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green); box-shadow: 0 0 8px var(--green);
-  animation: blink 1.4s ease-in-out infinite;
-}
-@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.15;} }
-.sync-btn {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
-  padding: 6px 16px; border: 1px solid var(--border); border-radius: 2px;
-  background: transparent; color: var(--text-dim); cursor: pointer;
-  transition: all .2s; position: relative; overflow: hidden;
-}
-.sync-btn::before {
-  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0,212,180,0.12), transparent);
-  transition: left .4s;
-}
-.sync-btn:hover::before { left: 100%; }
-.sync-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+/* Stars bg */
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle 2s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.2;}50%{opacity:.8;}}
 
-/* ═══════════════════════════════════════════════════════
-   LAYOUT
-═══════════════════════════════════════════════════════ */
-#main { position: relative; z-index: 1; padding: 32px; max-width: 1700px; margin: 0 auto; }
+/* Moon */
+.boot-moon{position:absolute;top:14px;right:22px;width:28px;height:28px;background:#ffe8a0;border-radius:50%;box-shadow:0 0 12px rgba(255,232,160,0.5);animation:moon-glow 3s ease-in-out infinite;}
+@keyframes moon-glow{0%,100%{box-shadow:0 0 12px rgba(255,232,160,0.4);}50%{box-shadow:0 0 24px rgba(255,232,160,0.7);}}
 
-/* ── SECTION HEADER ── */
-.section-hdr { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
-.section-hdr h2 {
-  font-family: var(--head); font-size: 10px; font-weight: 700;
-  letter-spacing: 5px; color: var(--cyan); text-transform: uppercase; white-space: nowrap;
+/* Water */
+.boot-water{position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(180deg,rgba(0,80,180,0.5),rgba(0,40,120,0.8));overflow:hidden;}
+.water-wave{position:absolute;top:0;left:-100%;width:300%;height:12px;background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,200,255,0.3) 40px,rgba(0,200,255,0.3) 80px);animation:wave-anim 3s linear infinite;}
+.water-wave2{position:absolute;top:6px;left:-100%;width:300%;height:8px;background:repeating-linear-gradient(90deg,transparent,transparent 30px,rgba(0,180,255,0.2) 30px,rgba(0,180,255,0.2) 60px);animation:wave-anim 4s linear infinite reverse;}
+@keyframes wave-anim{0%{transform:translateX(0);}100%{transform:translateX(33.33%);}}
+
+/* Platform / rock */
+.boot-platform{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:linear-gradient(180deg,#4a5568,#2d3748);border-radius:8px 8px 4px 4px;box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+
+/* Cat SVG */
+.boot-cat{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);width:54px;height:54px;}
+
+/* Fishing rod */
+.boot-rod-wrap{position:absolute;bottom:116px;left:calc(50% + 12px);width:3px;height:55px;transform-origin:bottom center;transform:rotate(25deg);background:linear-gradient(180deg,#a0522d,#8b4513);border-radius:2px;}
+.boot-line{position:absolute;bottom:-1px;left:1px;width:1.5px;background:rgba(200,220,255,0.6);transform-origin:top center;animation:line-dangle 2.5s ease-in-out infinite;}
+@keyframes line-dangle{0%,100%{height:40px;transform:rotate(-5deg);}50%{height:45px;transform:rotate(5deg);}}
+
+/* Fish on hook */
+.boot-fish{
+  position:absolute;
+  left:calc(50% + 26px);
+  animation:fish-bob 2.5s ease-in-out infinite;
+  font-size:18px;
+  filter:drop-shadow(0 0 6px rgba(0,200,255,0.8));
 }
-.section-hdr-line {
-  flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(0,212,180,0.5), transparent);
-  position: relative; overflow: visible;
-}
-.section-hdr-line::after {
-  content: '';
-  position: absolute; left: 0; top: -2px; height: 5px; width: 0;
-  background: linear-gradient(90deg, var(--cyan), transparent);
-  animation: scan-line 3s ease-in-out infinite;
-}
-@keyframes scan-line {
-  0%   { width: 0; opacity: 1; }
-  60%  { width: 200px; opacity: 0.8; }
-  100% { width: 200px; opacity: 0; }
-}
-.section-tag {
-  font-family: var(--mono); font-size: 8px; letter-spacing: 2px;
-  color: var(--text-dim); padding: 3px 10px;
-  border: 1px solid var(--border); border-radius: 2px;
-  background: rgba(0,212,180,0.03);
+@keyframes fish-bob{
+  0%,100%{bottom:90px;transform:rotate(-10deg) scaleX(-1);}
+  50%{bottom:80px;transform:rotate(10deg) scaleX(-1);}
 }
 
-/* ═══════════════════════════════════════════════════════
-   CARD BASE
-═══════════════════════════════════════════════════════ */
-.card-base {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  position: relative; overflow: hidden;
-  transition: border-color .3s, box-shadow .3s;
-}
-.card-base::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
-  opacity: .4;
-}
-/* Corner brackets via box-image technique */
-.card-base .card-corners {
-  position: absolute; inset: 0; pointer-events: none; z-index: 1;
-}
-.card-base .card-corners::before,
-.card-base .card-corners::after {
-  content: ''; position: absolute;
-  width: 14px; height: 14px;
-  border-color: rgba(0,212,180,0.35);
-  border-style: solid;
-}
-.card-base .card-corners::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
-.card-base .card-corners::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+/* Bubbles */
+.bubble{position:absolute;border-radius:50%;border:1px solid rgba(0,200,255,0.5);animation:bubble-rise var(--bd,3s) ease-in var(--bdelay,0s) infinite;}
+@keyframes bubble-rise{0%{opacity:0;transform:translateY(0) scale(0.5);}20%{opacity:.6;}100%{opacity:0;transform:translateY(-50px) scale(1.2);}}
 
-.card-base.hot { border-color: var(--border-hot); }
-.card-base.hot::before { background: linear-gradient(90deg, transparent, var(--orange), transparent); }
-.card-base.hot .card-corners::before,
-.card-base.hot .card-corners::after { border-color: rgba(255,90,30,0.35); }
+/* Cat paw twitch */
+@keyframes paw-twitch{0%,80%,100%{transform:rotate(0deg);}85%{transform:rotate(-8deg);}90%{transform:rotate(5deg);}}
 
-.card-base:hover { border-color: rgba(0,212,180,0.28); box-shadow: 0 0 40px rgba(0,212,180,0.06); }
-.card-base.hot:hover { border-color: rgba(255,90,30,0.35); box-shadow: 0 0 40px rgba(255,90,30,0.06); }
+.boot-label{font-family:var(--head);font-size:10px;letter-spacing:6px;color:var(--cold1);text-shadow:0 0 20px rgba(0,200,255,0.6);text-transform:uppercase;}
+.boot-dots{display:inline-block;width:28px;text-align:left;}
+.boot-bar-outer{width:240px;height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;position:relative;}
+.boot-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cold2),var(--cold1));border-radius:2px;box-shadow:0 0 12px var(--cold1),0 0 24px rgba(0,200,255,0.3);transition:width .12s linear;}
+.boot-bar-sweep{position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);animation:seg-sweep 1.6s ease-in-out infinite;pointer-events:none;}
+.boot-pct{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);letter-spacing:2px;margin-top:-10px;}
 
-.card-inner-glow {
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0,212,180,0.04), transparent);
-}
-.card-inner-glow.hot { background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,90,30,0.05), transparent); }
+/* ═══════ TOPBAR ═══════ */
+#topbar{position:sticky;top:0;z-index:100;height:62px;padding:0 36px;display:flex;align-items:center;justify-content:space-between;background:rgba(4,6,15,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(24px);}
+#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cold1),var(--hot1),transparent);opacity:0.25;}
+.logo{display:flex;align-items:center;gap:15px;}
+.logo-mark{width:40px;height:40px;border:1.5px solid rgba(0,200,255,0.35);border-radius:4px;display:flex;align-items:center;justify-content:center;background:rgba(0,200,255,0.04);position:relative;animation:logo-pulse 3s ease-in-out infinite;}
+.logo-mark::before,.logo-mark::after{content:'';position:absolute;width:12px;height:12px;border-style:solid;border-color:rgba(0,200,255,0.5);}
+.logo-mark::before{top:-3px;left:-3px;border-width:1.5px 0 0 1.5px;}
+.logo-mark::after{bottom:-3px;right:-3px;border-width:0 1.5px 1.5px 0;}
+.logo-mark span{font-size:20px;line-height:1;}
+@keyframes logo-pulse{0%,100%{box-shadow:0 0 12px rgba(0,200,255,0.2);}50%{box-shadow:0 0 30px rgba(0,200,255,0.55),0 0 60px rgba(0,200,255,0.12);}}
+.logo-txt{font-family:var(--head);font-size:14px;font-weight:700;letter-spacing:4px;}
+.logo-txt span:first-child{color:var(--cold1);}
+.logo-txt span:last-child{color:var(--hot2);}
+.logo-sub{font-family:var(--mono);font-size:8px;color:var(--text-dim);letter-spacing:2.5px;margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:18px;}
+#uptime{font-family:var(--mono);font-size:13px;color:var(--cold1);letter-spacing:2px;text-shadow:0 0 14px rgba(0,200,255,0.5);}
+.conn-badge{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;letter-spacing:1.5px;padding:5px 14px;border:1px solid rgba(0,255,136,0.35);border-radius:3px;color:var(--green);background:rgba(0,255,136,0.05);}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.15;}}
+.sync-btn{font-family:var(--mono);font-size:9px;letter-spacing:2px;padding:7px 18px;border:1px solid rgba(0,200,255,0.25);border-radius:3px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .2s;}
+.sync-btn:hover{border-color:var(--cold1);color:var(--cold1);box-shadow:0 0 18px rgba(0,200,255,0.15);}
 
-/* ── CARD LABEL ── */
-.card-label {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 3px;
-  color: var(--text-dim); display: flex; align-items: center; gap: 8px; margin-bottom: 18px;
-}
-.card-label svg { opacity: .7; }
-.card-label .badge {
-  margin-left: auto; font-size: 8px; padding: 2px 10px;
-  border: 1px solid var(--border); border-radius: 2px;
-  background: rgba(0,212,180,0.07); color: var(--cyan); letter-spacing: 2px;
-}
-.card-label .badge.hot {
-  border-color: var(--border-hot); background: rgba(255,90,30,0.07); color: var(--orange);
-}
+/* ═══════ MAIN ═══════ */
+#main{position:relative;z-index:1;padding:30px 36px;max-width:1800px;margin:0 auto;}
 
-/* ═══════════════════════════════════════════════════════
-   GAUGE GRID
-═══════════════════════════════════════════════════════ */
-.gauge-row {
-  display: grid; grid-template-columns: repeat(6, 1fr);
-  gap: 16px; margin-bottom: 28px;
-}
-@media(max-width:1100px) { .gauge-row { grid-template-columns: repeat(3,1fr); } }
-@media(max-width:700px)  { .gauge-row { grid-template-columns: 1fr 1fr; } }
-@media(max-width:480px)  { .gauge-row { grid-template-columns: 1fr; } }
+/* ═══════ SECTION HDR ═══════ */
+.section-hdr{display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+.section-hdr h2{font-family:var(--head);font-size:9px;font-weight:700;letter-spacing:5px;color:var(--cold1);text-transform:uppercase;white-space:nowrap;}
+.section-hdr-line{flex:1;height:1px;background:linear-gradient(90deg,rgba(0,200,255,0.4),transparent);}
+.section-tag{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);padding:3px 10px;border:1px solid var(--border);border-radius:2px;}
 
-.gauge-card { padding: 22px 22px 18px; }
+/* ═══════ HERO GRID ═══════ */
+.hero-grid{display:grid;grid-template-columns:1fr 1fr 300px;grid-template-rows:auto auto;gap:18px;margin-bottom:20px;}
+@media(max-width:1100px){.hero-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:700px){.hero-grid{grid-template-columns:1fr;}}
 
-/* ═══════════════════════════════════════════════════════
-   ORBITING RING GAUGE
-═══════════════════════════════════════════════════════ */
-.ring-wrap { display: flex; align-items: center; gap: 22px; }
-.ring-svg-wrap { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
-.ring-svg-wrap > svg { width: 130px; height: 130px; transform: rotate(-90deg); }
+/* ═══════ CARD BASE ═══════ */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:4px;position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s;}
+.card:hover{box-shadow:0 0 40px rgba(0,200,255,0.05);}
+.card .c-corner{position:absolute;inset:0;pointer-events:none;z-index:1;}
+.card .c-corner::before,.card .c-corner::after{content:'';position:absolute;width:12px;height:12px;border-color:rgba(0,200,255,0.28);border-style:solid;}
+.card .c-corner::before{top:0;left:0;border-width:1px 0 0 1px;}
+.card .c-corner::after{bottom:0;right:0;border-width:0 1px 1px 0;}
+.card.hot-card{border-color:var(--border-hot);}
+.card.hot-card .c-corner::before,.card.hot-card .c-corner::after{border-color:rgba(255,61,0,0.3);}
+.card.hot-card:hover{box-shadow:0 0 40px rgba(255,61,0,0.06);}
 
-.ring-track { fill: none; stroke: rgba(255,255,255,0.04); stroke-width: 7; }
-.ring-ticks { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 2; stroke-dasharray: 2 16; }
-.ring-fill {
-  fill: none; stroke-width: 7; stroke-linecap: round;
-  transition: stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1);
-  filter: drop-shadow(0 0 5px currentColor);
-}
+/* ═══════ TEMP CARD ═══════ */
+.temp-card{padding:28px 30px;grid-column:1;overflow:hidden;}
+.temp-top-bar{height:3px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,var(--hot1),var(--hot2),var(--hot3));box-shadow:0 0 20px rgba(255,61,0,0.5);}
+.temp-label{font-family:var(--mono);font-size:8.5px;letter-spacing:3px;color:rgba(255,130,0,0.55);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.temp-badge{margin-left:auto;font-size:8px;padding:2px 10px;border:1px solid rgba(255,80,0,0.4);border-radius:2px;background:rgba(255,61,0,0.08);color:var(--hot2);letter-spacing:2px;}
+.big-temp-num{font-family:var(--head);font-size:88px;font-weight:700;line-height:1;letter-spacing:-2px;background:linear-gradient(160deg,var(--hot3) 0%,var(--hot2) 40%,var(--hot1) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 20px rgba(255,100,0,0.5));transition:all 0.8s cubic-bezier(.4,0,.2,1);}
+.big-temp-unit{font-family:var(--mono);font-size:22px;color:rgba(255,140,0,0.5);vertical-align:super;}
+.temp-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,61,0,0.12);}
+.tstat{display:flex;flex-direction:column;gap:4px;}
+.tstat-label{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);}
+.tstat-val{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--hot2);}
+.mini-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:4px;overflow:hidden;}
+.mini-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.mb-hot{background:linear-gradient(90deg,var(--hot1),var(--hot3));}
+.mb-cold{background:linear-gradient(90deg,var(--cold2),var(--cold1));}
 
-/* Orbiting dot — separate layer */
-.ring-orbit-layer {
-  position: absolute; inset: 0;
-  animation: orbit-spin 3.5s linear infinite;
-  transform-origin: center center;
+/* ── HOT PERSON ANIMATION ── */
+.hot-person-wrap{
+  position:absolute;bottom:8px;right:12px;
+  pointer-events:none;opacity:0;transition:opacity 1s;
+  font-size:0;
 }
-.ring-orbit-layer > svg { width: 130px; height: 130px; transform: none; }
-.orbit-dot {
-  fill: #fff;
-  filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px var(--cyan));
+.hot-person-wrap.active{opacity:1;}
+.hot-svg{width:60px;height:80px;}
+/* sweat drops */
+.sweat-drop{animation:sweat-fall var(--sd,1.2s) ease-in var(--sdelay,0s) infinite;opacity:0;}
+@keyframes sweat-fall{
+  0%{transform:translateY(0) scaleY(0.5);opacity:0;}
+  15%{opacity:0.9;}
+  100%{transform:translateY(22px) scaleY(1.5);opacity:0;}
 }
-.orbit-dot.hot { filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 9px var(--orange)); }
-@keyframes orbit-spin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+/* body bounce */
+.person-body{animation:heat-bounce 0.8s ease-in-out infinite;}
+@keyframes heat-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}  }
+/* fan wave */
+.person-arm{transform-origin:10px 5px;animation:fan-wave 0.4s ease-in-out infinite alternate;}
+@keyframes fan-wave{0%{transform:rotate(-15deg);}100%{transform:rotate(10deg);}}
+/* heat shimmer bg */
+.heat-shimmer{
+  position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s;
+  background:repeating-linear-gradient(0deg,transparent,transparent 8px,rgba(255,100,0,0.015) 8px,rgba(255,100,0,0.015) 9px);
+  animation:shimmer-wave 2s ease-in-out infinite;
+}
+.heat-shimmer.active{opacity:1;}
+@keyframes shimmer-wave{0%,100%{background-position:0 0;}50%{background-position:0 4px;}}
 
-.ring-center {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none;
-}
-.ring-val {
-  font-family: var(--head); font-size: 27px; font-weight: 700;
-  line-height: 1; letter-spacing: 1px;
-}
-.ring-unit { font-family: var(--mono); font-size: 8px; color: var(--text-dim); letter-spacing: 2px; margin-top: 4px; }
+/* fire particles (keep) */
+.fire-wrap{position:absolute;bottom:0;left:0;right:0;height:80px;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1s;}
+.fire-wrap.active{opacity:1;}
+.fire-particle{position:absolute;bottom:0;width:4px;height:4px;border-radius:50%;animation:fire-rise var(--dur,2.5s) ease-out var(--delay,0s) infinite;}
+@keyframes fire-rise{0%{transform:translateY(0) scale(1);opacity:0.9;}50%{transform:translateY(-40px) scale(1.8) translateX(var(--dx,8px));opacity:0.6;}100%{transform:translateY(-80px) scale(0.2) translateX(var(--dx2,15px));opacity:0;}}
 
-/* ── RING STATS ── */
-.ring-stats { flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.rstat { display: flex; align-items: center; gap: 10px; }
-.rstat-label { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); width: 32px; }
-.rstat-bar { flex: 1; }
-.rstat-val { font-family: var(--mono); font-size: 10px; width: 44px; text-align: right; }
+/* ═══════ HUM CARD ═══════ */
+.hum-card{padding:28px 30px;grid-column:2;overflow:hidden;}
+.cold-top-bar{height:3px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,var(--cold2),var(--cold1),var(--cold3));box-shadow:0 0 20px rgba(0,200,255,0.45);}
+.hum-label{font-family:var(--mono);font-size:8.5px;letter-spacing:3px;color:rgba(0,200,255,0.5);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.hum-badge{margin-left:auto;font-size:8px;padding:2px 10px;border:1px solid rgba(0,200,255,0.35);border-radius:2px;background:rgba(0,200,255,0.07);color:var(--cold1);letter-spacing:2px;}
+.big-hum-num{font-family:var(--head);font-size:88px;font-weight:700;line-height:1;letter-spacing:-2px;background:linear-gradient(160deg,#a3d8ff 0%,var(--cold1) 40%,var(--cold2) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 20px rgba(0,180,255,0.45));transition:all 0.8s cubic-bezier(.4,0,.2,1);}
+.big-hum-unit{font-family:var(--mono);font-size:22px;color:rgba(0,200,255,0.45);vertical-align:super;}
+.hum-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(0,200,255,0.12);}
 
-.trend-row {
-  display: flex; align-items: center; gap: 10px;
-  margin-top: 10px; padding-top: 12px; border-top: 1px solid var(--border);
+/* ── HIGH HUMIDITY PERSON (drenched) ── */
+.hum-person-wrap{
+  position:absolute;bottom:8px;right:12px;
+  pointer-events:none;opacity:0;transition:opacity 1s;
 }
-.trend-label { font-family: var(--mono); font-size: 8px; letter-spacing: 2px; color: var(--text-dim); }
-.trend-vals { display: flex; gap: 6px; margin-left: auto; }
-.trend-v { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 2px; }
-.tv-up  { color: var(--orange); background: rgba(255,90,30,0.10); }
-.tv-mid { color: var(--cyan);   background: rgba(0,212,180,0.08); }
-.tv-dn  { color: var(--blue);   background: rgba(34,170,255,0.08); }
+.hum-person-wrap.active{opacity:1;}
+.rain-over-person{position:absolute;top:-20px;left:0;right:0;overflow:hidden;height:90px;}
+.rain-drop{position:absolute;top:-10px;width:1.5px;background:linear-gradient(180deg,transparent,var(--cold1));border-radius:1px;animation:rain-person-fall var(--rd,0.6s) linear var(--rdelay,0s) infinite;}
+@keyframes rain-person-fall{0%{top:-10px;opacity:0;}20%{opacity:.7;}100%{top:80px;opacity:0;}}
+.hum-person-body{animation:soggy-sway 2s ease-in-out infinite;}
+@keyframes soggy-sway{0%,100%{transform:rotate(-2deg);}50%{transform:rotate(2deg);}}
 
-.status-badge {
-  font-family: var(--mono); font-size: 8px; letter-spacing: 2px;
-  padding: 3px 10px; border-radius: 2px; border: 1px solid;
-}
-.sb-warm   { color: var(--orange); border-color: rgba(255,90,30,0.4);  background: rgba(255,90,30,0.08); }
-.sb-normal { color: var(--cyan);   border-color: rgba(0,212,180,0.4);  background: rgba(0,212,180,0.06); }
-.sb-hot    { color: var(--red);    border-color: rgba(255,45,85,0.4);  background: rgba(255,45,85,0.08); }
+/* Ice crystals (keep) */
+.ice-wrap{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.2s;}
+.ice-wrap.active{opacity:1;}
+.ice-crystal{position:absolute;width:3px;height:3px;background:var(--cold1);border-radius:50%;animation:ice-fall var(--dur,3s) linear var(--delay,0s) infinite;box-shadow:0 0 6px var(--cold1);}
+@keyframes ice-fall{0%{transform:translateY(-20px) rotate(0deg);opacity:0;}10%{opacity:0.7;}90%{opacity:0.5;}100%{transform:translateY(110%) rotate(360deg);opacity:0;}}
 
-/* ═══════════════════════════════════════════════════════
-   CYBER SEGMENTED BAR
-═══════════════════════════════════════════════════════ */
-.seg-bar { display: flex; gap: 2px; width: 100%; }
-.seg-bar.h-sm { height: 6px; }
-.seg-bar.h-md { height: 8px; }
-.seg-bar .seg {
-  flex: 1; height: 100%; border-radius: 1px;
-  background: rgba(255,255,255,0.05);
-  transition: background .35s, box-shadow .35s;
-  position: relative; overflow: hidden;
-}
-.seg-bar .seg.active {
-  background: currentColor;
-  box-shadow: 0 0 5px currentColor;
-}
-.seg-bar .seg.scanning::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
-  animation: seg-sweep 1.8s ease-in-out infinite;
-}
-@keyframes seg-sweep {
-  0%   { transform: translateX(-200%); }
-  100% { transform: translateX(400%); }
-}
+/* ═══════ OVERVIEW PANEL ═══════ */
+.overview-card{grid-column:3;grid-row:1/3;padding:26px 24px;display:flex;flex-direction:column;gap:0;}
+@media(max-width:1100px){.overview-card{grid-column:1/3;grid-row:auto;}}
+.ov-top-bar{height:3px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,var(--cold2),var(--cold1),var(--hot1),var(--hot2));box-shadow:0 0 18px rgba(0,200,255,0.3);}
+.ov-count-wrap{text-align:center;padding:20px 0 18px;}
+.ov-count-num{font-family:var(--head);font-size:56px;font-weight:700;background:linear-gradient(135deg,var(--cold1),var(--cold3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:block;line-height:1;letter-spacing:-1px;filter:drop-shadow(0 0 18px rgba(0,200,255,0.3));}
+.ov-count-label{font-family:var(--mono);font-size:8px;letter-spacing:3px;color:var(--text-dim);margin-top:5px;}
+.ov-divider{height:1px;background:var(--border);margin:14px 0;}
+.ov-item{margin-bottom:14px;}
+.ov-item label{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);display:block;margin-bottom:5px;}
+.ov-item span{font-family:var(--mono);font-size:13px;color:var(--text);}
+.ov-hi{font-family:var(--head);font-size:30px;font-weight:700;line-height:1;background:linear-gradient(135deg,var(--hot2),var(--hot3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 12px rgba(255,120,0,0.4));}
+.online-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:8px;letter-spacing:2px;padding:4px 12px;border:1px solid rgba(0,255,136,0.4);border-radius:2px;color:var(--green);background:rgba(0,255,136,0.06);animation:pill-pulse 2s ease-in-out infinite;}
+@keyframes pill-pulse{0%,100%{box-shadow:none;}50%{box-shadow:0 0 14px rgba(0,255,136,0.2);}}
+.ov-sync-row{margin-top:auto;padding-top:14px;border-top:1px solid var(--border);}
+.ov-sync-row label{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);display:block;margin-bottom:5px;}
+.ov-sync-row span{font-family:var(--mono);font-size:10px;color:rgba(0,200,255,0.45);}
 
-/* ═══════════════════════════════════════════════════════
-   OVERVIEW CARD
-═══════════════════════════════════════════════════════ */
-.overview-card { padding: 22px 24px; }
-.ov-big {
-  font-family: var(--head); font-size: 44px; font-weight: 900;
-  color: var(--cyan); text-align: center; letter-spacing: 2px; line-height: 1;
-  text-shadow: 0 0 30px rgba(0,212,180,0.4);
-}
-.ov-sub { font-family: var(--mono); font-size: 8px; letter-spacing: 3px; color: var(--text-dim); text-align: center; margin-top: 5px; }
-.ov-divider { height: 1px; background: var(--border); margin: 16px 0; }
-.ov-row { display: flex; justify-content: space-between; align-items: center; }
-.ov-item label { font-family: var(--mono); font-size: 8px; letter-spacing: 2px; color: var(--text-dim); display: block; margin-bottom: 4px; }
-.ov-item span { font-family: var(--mono); font-size: 12px; color: var(--text); }
-.online-pill {
-  font-family: var(--mono); font-size: 8px; letter-spacing: 2px;
-  padding: 3px 12px;
-  background: rgba(42,255,136,0.08); border: 1px solid rgba(42,255,136,0.4);
-  border-radius: 2px; color: var(--green);
-  animation: pulse-online 2s ease-in-out infinite;
-}
-@keyframes pulse-online {
-  0%,100% { box-shadow: 0 0 0 rgba(42,255,136,0); }
-  50%     { box-shadow: 0 0 14px rgba(42,255,136,0.25); }
-}
+/* ═══════ ALT METRIC ROW ═══════ */
+.alt-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:20px;}
+@media(max-width:800px){.alt-row{grid-template-columns:1fr 1fr;}}
+@media(max-width:520px){.alt-row{grid-template-columns:1fr;}}
+.alt-card{padding:22px 24px;}
 
-/* ═══════════════════════════════════════════════════════
-   ALT METRIC CARDS
-═══════════════════════════════════════════════════════ */
-.alt-card { padding: 22px 22px 18px; display: flex; flex-direction: column; }
-.alt-card::before { background: linear-gradient(90deg, transparent, var(--yellow), transparent); }
-.alt-card.wind::before { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
-.alt-card.rain::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+/* ring gauges */
+.alt-inner{display:flex;align-items:center;gap:18px;}
+.alt-ring-wrap{position:relative;width:100px;height:100px;flex-shrink:0;}
+.alt-ring-wrap svg{width:100px;height:100px;transform:rotate(-90deg);}
+.arc-track{fill:none;stroke:rgba(255,255,255,0.04);stroke-width:7;}
+.arc-fill{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dasharray 1s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 0 5px currentColor);}
+.arc-ticks{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:2;stroke-dasharray:2 12;}
+.arc-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.arc-val{font-family:var(--head);font-size:20px;font-weight:700;line-height:1;}
+.arc-unit{font-family:var(--mono);font-size:7px;color:var(--text-dim);letter-spacing:1.5px;margin-top:3px;}
 
-.alt-ring-wrap { display: flex; align-items: center; gap: 18px; flex: 1; }
-.alt-ring { position: relative; width: 106px; height: 106px; flex-shrink: 0; }
-.alt-ring > svg { width: 106px; height: 106px; transform: rotate(-90deg); }
+/* ── UV ANIMATION: SUN RAYS ── */
+.uv-sun-anim{position:absolute;inset:0;pointer-events:none;}
+.uv-sun-anim svg{width:100px;height:100px;animation:sun-spin 8s linear infinite;}
+@keyframes sun-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.sun-ray{stroke:rgba(240,192,0,0.5);stroke-width:2;stroke-linecap:round;animation:ray-pulse 2s ease-in-out infinite;}
+@keyframes ray-pulse{0%,100%{opacity:.3;stroke-width:1.5;}50%{opacity:1;stroke-width:2.5;}}
 
-.alt-ring-orbit {
-  position: absolute; inset: 0;
-  animation: orbit-spin 4s linear infinite;
-  transform-origin: center center;
+/* ── WIND ANIMATION: SPINNING ANEMOMETER ── */
+.wind-anim{position:absolute;inset:0;pointer-events:none;}
+.wind-anim svg{width:100px;height:100px;}
+.anemometer-group{transform-origin:50px 50px;animation:anemometer-spin var(--wind-spd,2s) linear infinite;}
+@keyframes anemometer-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+/* ── RAIN ANIMATION: RAIN DROPS FALLING ── */
+.rain-anim{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:50%;}
+.rain-anim svg{width:100px;height:100px;}
+.rdrop{stroke:var(--green);stroke-width:1.5;stroke-linecap:round;animation:rdrop-fall var(--rdur,0.8s) linear var(--rdel,0s) infinite;opacity:0;}
+@keyframes rdrop-fall{0%{transform:translateY(-10px);opacity:0;}30%{opacity:.8;}100%{transform:translateY(30px);opacity:0;}}
+
+.alt-info{flex:1;}
+.alt-status{font-family:var(--body);font-weight:700;font-size:13px;margin-bottom:5px;}
+.alt-desc{font-family:var(--mono);font-size:8.5px;letter-spacing:1px;color:var(--text-dim);line-height:1.6;}
+.alt-bar-section{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.05);}
+.alt-bar-label{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);margin-bottom:7px;}
+.seg-bar{display:flex;gap:2px;width:100%;}
+.seg-bar .seg{flex:1;height:7px;border-radius:1.5px;background:rgba(255,255,255,0.04);transition:background .3s,box-shadow .3s;position:relative;overflow:hidden;}
+.seg-bar .seg.active{background:currentColor;box-shadow:0 0 5px currentColor;}
+.seg-bar .seg.scanning::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.7),transparent);animation:seg-sweep 1.8s ease-in-out infinite;}
+@keyframes seg-sweep{0%{transform:translateX(-200%);}100%{transform:translateX(400%);}}
+
+.uv-card{--ac:var(--hot3);}
+.uv-card .card-top-line{background:linear-gradient(90deg,transparent,var(--hot3),transparent);box-shadow:0 0 16px rgba(240,192,0,0.35);}
+.wind-card{--ac:var(--cold1);}
+.wind-card .card-top-line{background:linear-gradient(90deg,transparent,var(--cold1),transparent);box-shadow:0 0 16px rgba(0,200,255,0.3);}
+.rain-card{--ac:var(--green);}
+.rain-card .card-top-line{background:linear-gradient(90deg,transparent,var(--green),transparent);box-shadow:0 0 16px rgba(0,255,136,0.25);}
+.card-top-line{position:absolute;top:0;left:0;right:0;height:2.5px;opacity:0.7;}
+
+/* ── WIND PERSON (blown back) ── */
+.wind-person-wrap{
+  margin-top:10px;display:flex;align-items:flex-end;gap:8px;
+  position:relative;overflow:hidden;height:55px;
 }
-.alt-ring-orbit > svg { width: 106px; height: 106px; transform: none; }
-.alt-ring-center {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.alt-ring-val { font-family: var(--head); font-size: 21px; font-weight: 700; line-height: 1; }
-.alt-ring-unit { font-family: var(--mono); font-size: 7px; color: var(--text-dim); letter-spacing: 1px; }
-.alt-info { flex: 1; }
-.alt-status { font-family: var(--body); font-weight: 600; font-size: 14px; margin-bottom: 6px; }
-.alt-desc { font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); }
-.alt-bar-wrap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-.alt-bar-label { font-family: var(--mono); font-size: 8px; color: var(--text-dim); margin-bottom: 7px; letter-spacing: 2px; }
+.wind-lines-bg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;}
+.wind-line-anim{stroke:rgba(0,200,255,0.35);stroke-width:1;stroke-linecap:round;animation:wind-line-slide 1.5s linear var(--wldel,0s) infinite;opacity:0;}
+@keyframes wind-line-slide{0%{transform:translateX(60px);opacity:0;}20%{opacity:.7;}80%{opacity:.5;}100%{transform:translateX(-80px);opacity:0;}}
+.blown-person{animation:blown-lean var(--lean-dur,1.5s) ease-in-out infinite;transform-origin:bottom center;}
+@keyframes blown-lean{0%,100%{transform:rotate(5deg) translateX(0);}50%{transform:rotate(18deg) translateX(-4px);}}
 
-/* ═══════════════════════════════════════════════════════
-   CHARTS
-═══════════════════════════════════════════════════════ */
-.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
-@media(max-width:800px) { .chart-row { grid-template-columns: 1fr; } }
+/* ═══════ CHART SECTION ═══════ */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px;}
+@media(max-width:800px){.chart-row{grid-template-columns:1fr;}}
+.chart-card{padding:22px 24px;}
+.chart-top-hot{height:2.5px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,transparent,var(--hot1),var(--hot2),transparent);opacity:0.55;}
+.chart-top-cold{height:2.5px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,transparent,var(--cold1),var(--cold2),transparent);opacity:0.55;}
+.chart-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.chart-title{font-family:var(--head);font-size:9.5px;font-weight:700;letter-spacing:4px;color:var(--text);}
+.chart-sub{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);margin-top:4px;}
+.chart-tabs{display:flex;gap:4px;}
+.ctab{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 11px;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;}
+.ctab.active,.ctab:hover{background:rgba(0,200,255,0.09);border-color:var(--cold1);color:var(--cold1);}
+.chart-canvas-wrap{height:200px;position:relative;}
 
-.chart-card { padding: 22px 22px 18px; }
-.chart-card::before { background: linear-gradient(90deg, transparent, var(--orange), transparent); opacity: .5; }
-.chart-card.hum::before { background: linear-gradient(90deg, transparent, var(--cyan), transparent); }
-
-.chart-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
-.chart-title { font-family: var(--head); font-size: 10px; font-weight: 700; letter-spacing: 4px; color: var(--text); }
-.chart-sub { font-family: var(--mono); font-size: 8px; letter-spacing: 2px; color: var(--text-dim); margin-top: 4px; }
-.chart-tabs { display: flex; gap: 4px; }
-.ctab {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
-  padding: 3px 11px; border: 1px solid var(--border); border-radius: 2px;
-  background: transparent; color: var(--text-dim); cursor: pointer; transition: all .15s;
+/* ── LIVE SENSOR RING PULSE ANIMATION ── */
+/* Replaced orbit dot with arc pulse glow */
+.ring-pulse-ring{
+  position:absolute;inset:0;pointer-events:none;
 }
-.ctab.active, .ctab:hover { background: rgba(0,212,180,0.10); border-color: var(--cyan); color: var(--cyan); }
-.chart-canvas-wrap { height: 190px; position: relative; }
-
-/* ── CORR ── */
-.corr-card { padding: 22px 22px 18px; margin-bottom: 28px; }
-.corr-card::before { background: linear-gradient(90deg, transparent, var(--orange) 35%, var(--cyan) 65%, transparent); opacity: .4; }
-.corr-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-.corr-legend { display: flex; gap: 18px; }
-.cleg { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); }
-.cleg-dot { width: 8px; height: 8px; border-radius: 50%; }
-.corr-canvas-wrap { height: 230px; position: relative; }
-
-/* ═══════════════════════════════════════════════════════
-   LOGS TABLE
-═══════════════════════════════════════════════════════ */
-.logs-card { padding: 22px 22px 18px; }
-.logs-hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
-.logs-hdr h3 {
-  font-family: var(--head); font-size: 10px; font-weight: 700;
-  letter-spacing: 4px; color: var(--cyan); text-shadow: 0 0 18px rgba(0,212,180,0.3);
-}
-.logs-search {
-  flex: 1; min-width: 160px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
-  background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 2px;
-  padding: 7px 14px; color: var(--text); outline: none; transition: border-color .2s;
-}
-.logs-search::placeholder { color: var(--text-dim); }
-.logs-search:focus { border-color: var(--dim); }
-.export-btn {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 2px;
-  padding: 8px 20px; border: 1px solid var(--cyan); border-radius: 2px;
-  background: rgba(0,212,180,0.07); color: var(--cyan); cursor: pointer;
-  transition: all .2s; white-space: nowrap; position: relative; overflow: hidden;
-}
-.export-btn::before {
-  content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0,212,180,0.18), transparent);
-  transition: left .4s;
-}
-.export-btn:hover::before { left: 100%; }
-.export-btn:hover { background: rgba(0,212,180,0.15); box-shadow: var(--glow-cyan); }
-
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-thead tr { border-bottom: 1px solid rgba(0,212,180,0.15); }
-th {
-  font-family: var(--mono); font-size: 8px; letter-spacing: 3px;
-  color: var(--text-dim); text-align: left; padding: 10px 14px;
-  text-transform: uppercase; white-space: nowrap;
-}
-tbody tr { border-bottom: 1px solid rgba(0,212,180,0.04); transition: background .15s; }
-tbody tr:hover { background: rgba(0,212,180,0.04); }
-tbody tr.new-row { animation: fadeRow .8s ease; }
-@keyframes fadeRow { from{background:rgba(0,212,180,0.12);} to{background:transparent;} }
-td { font-family: var(--mono); font-size: 11px; color: var(--text); padding: 10px 14px; white-space: nowrap; }
-td.col-temp { color: var(--orange); }
-td.col-hum  { color: var(--cyan); }
-td.col-hi   { color: var(--yellow); }
-td.col-ts   { color: var(--text-dim); font-size: 10px; }
-
-.pagination { display: flex; align-items: center; gap: 10px; margin-top: 18px; justify-content: flex-end; }
-.pg-btn {
-  font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
-  padding: 5px 14px; border: 1px solid var(--border); border-radius: 2px;
-  background: transparent; color: var(--text-dim); cursor: pointer; transition: all .15s;
-}
-.pg-btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
-.pg-btn:disabled { opacity: .3; cursor: default; }
-.pg-info { font-family: var(--mono); font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
-
-/* ═══════════════════════════════════════════════════════
-   UTILITIES
-═══════════════════════════════════════════════════════ */
-.skeleton {
-  background: linear-gradient(90deg, rgba(0,212,180,0.04) 25%, rgba(0,212,180,0.09) 50%, rgba(0,212,180,0.04) 75%);
-  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 2px;
-}
-@keyframes shimmer { from{background-position:200% 0;} to{background-position:-200% 0;} }
-#toast {
-  position: fixed; bottom: 26px; right: 26px; z-index: 999;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 2px;
-  padding: 12px 22px; border: 1px solid var(--cyan); border-radius: 2px;
-  background: rgba(3,8,16,0.97); color: var(--cyan);
-  transform: translateY(80px); opacity: 0; transition: all .3s; backdrop-filter: blur(12px);
-}
-#toast.show { transform: translateY(0); opacity: 1; }
-#toast.error { border-color: var(--red); color: var(--red); }
-
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--bg1); }
-::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 2px; }
-
-@media(max-width:700px) {
-  #topbar { padding: 0 18px; }
-  #main { padding: 18px; }
-  .logo-text { font-size: 13px; }
-  .ov-big { font-size: 32px; }
+.ring-pulse-ring svg{width:100px;height:100px;transform:rotate(-90deg);}
+.rp-circle{fill:none;stroke-width:7;stroke-linecap:round;animation:ring-chase var(--rp-dur,3s) ease-in-out infinite;}
+@keyframes ring-chase{
+  0%{stroke-dasharray:0 264;stroke-dashoffset:0;opacity:0.8;}
+  40%{stroke-dasharray:80 184;stroke-dashoffset:-40;opacity:1;}
+  80%{stroke-dasharray:10 254;stroke-dashoffset:-200;opacity:0.5;}
+  100%{stroke-dasharray:0 264;stroke-dashoffset:-264;opacity:0;}
 }
 
-/* ═══════════════════════════════════════════════════════
-   BOOT LOADER SCREEN
-═══════════════════════════════════════════════════════ */
-#boot-loader {
-  position: fixed; inset: 0; z-index: 9999;
-  background: #030810;
-  display: flex; align-items: center; justify-content: center;
-  flex-direction: column;
-  transition: opacity 0.6s ease, visibility 0.6s ease;
-}
-#boot-loader.fade-out {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-#boot-loader::before {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0,210,180,0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,210,180,0.025) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-#boot-loader::after {
-  content: '';
-  position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(0,60,50,0.18) 0%, transparent 70%);
-}
-.boot-center {
-  position: relative; z-index: 2;
-  display: flex; flex-direction: column; align-items: center; gap: 20px;
-}
-.boot-img-wrap {
-  width: 190px; height: 190px;
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1.5px solid rgba(0,212,180,0.25);
-  box-shadow:
-    0 0 0 1px rgba(0,212,180,0.08),
-    0 0 40px rgba(0,212,180,0.18),
-    0 0 80px rgba(0,212,180,0.07);
-  animation: boot-img-pulse 2.5s ease-in-out infinite;
-  background: #0a1420;
-}
-@keyframes boot-img-pulse {
-  0%,100% { box-shadow: 0 0 0 1px rgba(0,212,180,0.08), 0 0 40px rgba(0,212,180,0.18), 0 0 80px rgba(0,212,180,0.07); }
-  50%      { box-shadow: 0 0 0 1px rgba(0,212,180,0.18), 0 0 60px rgba(0,212,180,0.38), 0 0 120px rgba(0,212,180,0.14); }
-}
-.boot-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* ═══════ CORRELATION ═══════ */
+.corr-card{padding:22px 24px;margin-bottom:20px;}
+.corr-top{height:2.5px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,transparent,var(--hot1) 30%,var(--cold1) 70%,transparent);opacity:0.5;}
+.corr-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.corr-title{font-family:var(--head);font-size:9.5px;letter-spacing:4px;color:var(--text);}
+.corr-sub{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;color:var(--text-dim);margin-top:4px;}
+.corr-legend{display:flex;gap:18px;}
+.cleg{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:8.5px;letter-spacing:1px;color:var(--text-dim);}
+.cleg-dot{width:8px;height:8px;border-radius:50%;}
+.corr-canvas-wrap{height:230px;}
 
-.boot-label {
-  font-family: var(--head); font-size: 11px; font-weight: 700;
-  letter-spacing: 5px; color: var(--cyan);
-  text-shadow: 0 0 18px rgba(0,212,180,0.6);
-  text-transform: uppercase;
-}
-.boot-label .boot-dots { display: inline-block; width: 24px; text-align: left; }
+/* ═══════ LOGS ═══════ */
+.logs-card{padding:22px 24px;}
+.logs-top{height:2.5px;position:absolute;top:0;left:0;right:0;background:linear-gradient(90deg,transparent,var(--cold1),var(--cold2),transparent);opacity:0.5;}
+.logs-hdr{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.logs-hdr h3{font-family:var(--head);font-size:9.5px;letter-spacing:4px;color:var(--cold1);text-shadow:0 0 18px rgba(0,200,255,0.35);}
+.logs-search{flex:1;min-width:160px;font-family:var(--mono);font-size:11px;letter-spacing:1px;background:rgba(0,0,0,0.45);border:1px solid var(--border);border-radius:2px;padding:7px 14px;color:var(--text);outline:none;transition:border-color .2s;}
+.logs-search::placeholder{color:var(--text-dim);}
+.logs-search:focus{border-color:rgba(0,200,255,0.35);}
+.export-btn{font-family:var(--mono);font-size:9px;letter-spacing:2px;padding:8px 20px;border:1px solid rgba(0,200,255,0.3);border-radius:2px;background:rgba(0,200,255,0.06);color:var(--cold1);cursor:pointer;transition:all .2s;white-space:nowrap;}
+.export-btn:hover{background:rgba(0,200,255,0.13);box-shadow:0 0 20px rgba(0,200,255,0.15);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid rgba(0,200,255,0.12);}
+th{font-family:var(--mono);font-size:7.5px;letter-spacing:3px;color:var(--text-dim);text-align:left;padding:10px 14px;text-transform:uppercase;white-space:nowrap;}
+tbody tr{border-bottom:1px solid rgba(0,200,255,0.04);transition:background .15s;}
+tbody tr:hover{background:rgba(0,200,255,0.035);}
+tbody tr.new-row{animation:fadeRow .8s ease;}
+@keyframes fadeRow{from{background:rgba(0,200,255,0.1);}to{background:transparent;}}
+td{font-family:var(--mono);font-size:10.5px;color:var(--text);padding:10px 14px;white-space:nowrap;}
+td.col-temp{color:var(--hot2);}
+td.col-hum{color:var(--cold1);}
+td.col-hi{color:var(--hot3);}
+td.col-ts{color:var(--text-dim);font-size:9.5px;}
+.sbadge{font-family:var(--mono);font-size:7.5px;letter-spacing:1.5px;padding:2px 9px;border-radius:2px;border:1px solid;}
+.sb-hot{color:var(--hot1);border-color:rgba(255,61,0,0.4);background:rgba(255,61,0,0.07);}
+.sb-warm{color:var(--hot2);border-color:rgba(255,140,0,0.4);background:rgba(255,140,0,0.07);}
+.sb-normal{color:var(--cold1);border-color:rgba(0,200,255,0.35);background:rgba(0,200,255,0.05);}
+.pagination{display:flex;align-items:center;gap:10px;margin-top:16px;justify-content:flex-end;}
+.pg-btn{font-family:var(--mono);font-size:8.5px;letter-spacing:1px;padding:5px 14px;border:1px solid var(--border);border-radius:2px;background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s;}
+.pg-btn:hover:not(:disabled){border-color:var(--cold1);color:var(--cold1);}
+.pg-btn:disabled{opacity:.25;cursor:default;}
+.pg-info{font-family:var(--mono);font-size:8.5px;color:var(--text-dim);letter-spacing:1px;}
 
-.boot-bar-outer {
-  width: 220px; height: 4px;
-  background: rgba(255,255,255,0.05);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-}
-.boot-bar-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--cyan), var(--cyan2));
-  border-radius: 2px;
-  box-shadow: 0 0 10px var(--cyan), 0 0 20px rgba(0,212,180,0.4);
-  transition: width 0.12s linear;
-}
-.boot-bar-sweep {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
-  animation: bar-sweep 1.6s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes bar-sweep {
-  0%   { transform: translateX(-200%); }
-  100% { transform: translateX(500%); }
-}
-.boot-pct {
-  font-family: var(--mono); font-size: 10px;
-  color: var(--text-dim); letter-spacing: 2px;
-  margin-top: -8px;
-}
-.boot-scanline {
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0,212,180,0.55), transparent);
-  z-index: 3; pointer-events: none;
-  animation: sweep-y 5s linear infinite;
-  opacity: 0.4;
+/* ═══════ TOAST ═══════ */
+#toast{position:fixed;bottom:26px;right:26px;z-index:999;font-family:var(--mono);font-size:9.5px;letter-spacing:2px;padding:12px 22px;border:1px solid var(--cold1);border-radius:3px;background:rgba(4,6,15,0.97);color:var(--cold1);transform:translateY(80px);opacity:0;transition:all .3s;backdrop-filter:blur(14px);}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.error{border-color:var(--hot1);color:var(--hot1);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg1);}
+::-webkit-scrollbar-thumb{background:rgba(0,200,255,0.3);border-radius:2px;}
+
+@media(max-width:700px){
+  #topbar{padding:0 18px;}
+  #main{padding:18px;}
+  .big-temp-num,.big-hum-num{font-size:60px;}
 }
 </style>
 </head>
 <body>
 
+<!-- ═══ BOOT LOADER ═══ -->
 <div id="boot-loader">
+  <div class="boot-bg-grid"></div>
   <div class="boot-scanline"></div>
   <div class="boot-center">
-    <div class="boot-img-wrap">
-      <img src="https://media1.tenor.com/m/rdz5O8-z2osAAAAd/faddind-cat.gif" alt="Loading"/>
+
+    <!-- Fishing Scene -->
+    <div class="fishing-scene" id="fishing-scene">
+      <!-- Stars -->
+      <div class="star" style="width:2px;height:2px;top:12px;left:18px;--d:.4s;animation-delay:.2s;"></div>
+      <div class="star" style="width:1.5px;height:1.5px;top:22px;left:60px;animation-delay:.8s;"></div>
+      <div class="star" style="width:2px;height:2px;top:8px;left:100px;animation-delay:1.2s;"></div>
+      <div class="star" style="width:1px;height:1px;top:30px;left:150px;animation-delay:.3s;"></div>
+      <div class="star" style="width:1.5px;height:1.5px;top:18px;left:180px;animation-delay:.9s;"></div>
+      <!-- Moon -->
+      <div class="boot-moon"></div>
+
+      <!-- Water -->
+      <div class="boot-water">
+        <div class="water-wave"></div>
+        <div class="water-wave2"></div>
+        <!-- Bubbles -->
+        <div class="bubble" style="width:5px;height:5px;left:40%;bottom:10px;--bd:2.8s;--bdelay:0s;"></div>
+        <div class="bubble" style="width:4px;height:4px;left:55%;bottom:5px;--bd:3.5s;--bdelay:1s;"></div>
+        <div class="bubble" style="width:3px;height:3px;left:65%;bottom:12px;--bd:2.2s;--bdelay:0.5s;"></div>
+      </div>
+
+      <!-- Rock platform -->
+      <div class="boot-platform"></div>
+
+      <!-- Cat SVG sitting on rock -->
+      <svg class="boot-cat" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cat body -->
+        <g class="person-body">
+          <!-- Body -->
+          <ellipse cx="27" cy="36" rx="12" ry="11" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+          <!-- Head -->
+          <circle cx="27" cy="22" r="10" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+          <!-- Ears -->
+          <polygon points="19,14 16,7 23,12" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+          <polygon points="35,14 38,7 31,12" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+          <!-- Inner ears -->
+          <polygon points="19,13 17.5,9 22,12" fill="#ffb5a0"/>
+          <polygon points="35,13 36.5,9 32,12" fill="#ffb5a0"/>
+          <!-- Eyes (sleepy/focused) -->
+          <path d="M22 21 Q24 19 26 21" stroke="#3d2b1f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <path d="M28 21 Q30 19 32 21" stroke="#3d2b1f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- Nose -->
+          <ellipse cx="27" cy="24" rx="1.5" ry="1" fill="#e07b39"/>
+          <!-- Whiskers left -->
+          <line x1="26" y1="24" x2="16" y2="22" stroke="#3d2b1f" stroke-width="0.7" opacity=".6"/>
+          <line x1="26" y1="25" x2="16" y2="26" stroke="#3d2b1f" stroke-width="0.7" opacity=".6"/>
+          <!-- Whiskers right -->
+          <line x1="28" y1="24" x2="38" y2="22" stroke="#3d2b1f" stroke-width="0.7" opacity=".6"/>
+          <line x1="28" y1="25" x2="38" y2="26" stroke="#3d2b1f" stroke-width="0.7" opacity=".6"/>
+          <!-- Belly -->
+          <ellipse cx="27" cy="37" rx="7" ry="7" fill="#ffd7b5" opacity=".5"/>
+          <!-- Tail -->
+          <path d="M39 44 Q50 38 48 30 Q46 24 50 20" stroke="#e07b39" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <!-- Paw holding rod -->
+          <g class="person-arm">
+            <ellipse cx="17" cy="40" rx="5" ry="3.5" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+          </g>
+          <!-- Other paw resting -->
+          <ellipse cx="36" cy="42" rx="5" ry="3.5" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+        </g>
+      </svg>
+
+      <!-- Rod (positioned over cat paw) -->
+      <div class="boot-rod-wrap">
+        <div class="boot-line" id="fishing-line" style="height:44px;"></div>
+      </div>
+
+      <!-- Fish on hook -->
+      <div class="boot-fish" id="boot-fish">🐟</div>
     </div>
-    <div class="boot-label">CALIBRATING DHT11<span class="boot-dots" id="boot-dot-anim">...</span></div>
+
+    <div class="boot-label">INITIALIZING SENSORS<span class="boot-dots" id="boot-dots">...</span></div>
     <div class="boot-bar-outer">
       <div class="boot-bar-fill" id="boot-bar"></div>
       <div class="boot-bar-sweep"></div>
@@ -640,19 +509,19 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
   </div>
 </div>
 
-<div class="scanline-sweep"></div>
+<!-- AMBIENT -->
+<div class="bg-layer bg-grid"></div>
+<div class="bg-hot-blob"></div>
+<div class="bg-cold-blob"></div>
+<div class="scanline"></div>
 
-<!-- ═══ TOPBAR ═══ -->
+<!-- TOPBAR -->
 <header id="topbar">
   <div class="logo">
-    <div class="logo-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24">
-        <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-4 13.5c0-2.2 2.7-4 6-4s6 1.8 6 4H8z"/>
-      </svg>
-    </div>
+    <div class="logo-mark"><span>🌡</span><div class="c-corner"></div></div>
     <div>
-      <div class="logo-text">KINO CYBERWEATHER</div>
-      <div class="logo-sub">ESP32 · DHT11 · SECURE MONITOR</div>
+      <div class="logo-txt"><span>ako-nalang-diay</span><span> WEATHER</span></div>
+      <div class="logo-sub">ESP32 · DHT11 · CYBERWEATHER</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -664,260 +533,347 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
 
 <main id="main">
 
-  <!-- ═══ SECTION 1: GAUGES ═══ -->
   <div class="section-hdr">
     <h2>Live Sensor Modules</h2>
     <span class="section-tag">REAL-TIME</span>
     <div class="section-hdr-line"></div>
   </div>
 
-  <div class="gauge-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;">
+  <div class="hero-grid">
 
-    <!-- Temperature -->
-    <div class="card-base gauge-card hot" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow hot"></div>
-      <div class="card-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--orange)"><path d="M14 14.76V3.5A2.5 2.5 0 0 0 9 3.5v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
-        TEMPERATURE MODULE
-        <span class="badge hot" id="temp-status-badge">WARM</span>
+    <!-- TEMP CARD -->
+    <div class="card hot-card temp-card">
+      <div class="temp-top-bar"></div>
+      <div class="c-corner"></div>
+      <div class="heat-shimmer" id="heat-shimmer"></div>
+      <div class="fire-wrap" id="fire-wrap"></div>
+      <!-- Hot person animation -->
+      <div class="hot-person-wrap" id="hot-person-wrap">
+        <svg class="hot-svg" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="person-body">
+            <!-- Head -->
+            <circle cx="30" cy="14" r="10" fill="#f4a261" stroke="#e07b39" stroke-width="1.2"/>
+            <!-- Sweat drops from head -->
+            <ellipse class="sweat-drop" cx="22" cy="14" rx="2" ry="3.5" fill="#60a5fa" style="--sd:1.3s;--sdelay:0s;"/>
+            <ellipse class="sweat-drop" cx="38" cy="10" rx="1.5" ry="3" fill="#60a5fa" style="--sd:1.6s;--sdelay:0.4s;"/>
+            <ellipse class="sweat-drop" cx="30" cy="6" rx="1.5" ry="3" fill="#60a5fa" style="--sd:1.1s;--sdelay:0.8s;"/>
+            <!-- Face: melting expression -->
+            <circle cx="26" cy="13" r="1.5" fill="#3d2b1f"/>
+            <circle cx="34" cy="13" r="1.5" fill="#3d2b1f"/>
+            <!-- Sad droopy mouth -->
+            <path d="M25 18 Q30 16 35 18" stroke="#3d2b1f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- Wavy heat lines above head -->
+            <path d="M18 2 Q20 0 22 2 Q24 4 26 2" stroke="#ff6b35" stroke-width="1" fill="none" opacity=".6" stroke-linecap="round"/>
+            <path d="M28 1 Q30 -1 32 1 Q34 3 36 1" stroke="#ff6b35" stroke-width="1" fill="none" opacity=".5" stroke-linecap="round"/>
+            <!-- Body -->
+            <rect x="20" y="26" width="20" height="26" rx="4" fill="#f9c784" stroke="#e0a040" stroke-width="1"/>
+            <!-- T-shirt sweat patch -->
+            <ellipse cx="30" cy="33" rx="6" ry="5" fill="rgba(200,180,100,0.4)"/>
+            <!-- Fan/hand waving -->
+            <g class="person-arm">
+              <rect x="8" y="28" width="10" height="6" rx="2" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+              <!-- Fan blades -->
+              <rect x="3" y="25" width="6" height="8" rx="1" fill="#93c5fd" stroke="#60a5fa" stroke-width=".8" opacity=".8" transform="rotate(-20,6,29)"/>
+              <rect x="2" y="27" width="8" height="5" rx="1" fill="#93c5fd" stroke="#60a5fa" stroke-width=".8" opacity=".8" transform="rotate(20,6,29)"/>
+            </g>
+            <!-- Other arm down -->
+            <rect x="42" y="30" width="9" height="5" rx="2" fill="#f4a261" stroke="#e07b39" stroke-width="1"/>
+            <!-- Legs -->
+            <rect x="22" y="50" width="7" height="16" rx="3" fill="#f9c784" stroke="#e0a040" stroke-width="1"/>
+            <rect x="31" y="50" width="7" height="16" rx="3" fill="#f9c784" stroke="#e0a040" stroke-width="1"/>
+            <!-- Shoes -->
+            <ellipse cx="25.5" cy="66" rx="5" ry="3" fill="#7c3aed"/>
+            <ellipse cx="34.5" cy="66" rx="5" ry="3" fill="#7c3aed"/>
+          </g>
+        </svg>
       </div>
-      <div class="ring-wrap">
-        <div class="ring-svg-wrap">
-          <svg viewBox="0 0 130 130">
-            <circle class="ring-track" cx="65" cy="65" r="55"/>
-            <circle class="ring-ticks" cx="65" cy="65" r="55"/>
-            <circle class="ring-fill" cx="65" cy="65" r="55" stroke="var(--orange)" stroke-dasharray="0 345" id="temp-ring"/>
-          </svg>
-          <div class="ring-orbit-layer" id="temp-orbit-layer">
-            <svg viewBox="0 0 130 130">
-              <circle class="orbit-dot hot" cx="65" cy="10" r="4.5"/>
-            </svg>
-          </div>
-          <div class="ring-center">
-            <span class="ring-val" style="color:var(--orange)" id="temp-val">--.-</span>
-            <span class="ring-unit">°C</span>
-          </div>
+      <div class="temp-label">
+        🔥 TEMPERATURE MODULE
+        <span class="temp-badge" id="temp-status-badge">WARM</span>
+      </div>
+      <div>
+        <span class="big-temp-num" id="temp-val">--.-</span><span class="big-temp-unit">°C</span>
+      </div>
+      <div class="temp-stats">
+        <div class="tstat">
+          <div class="tstat-label">▲ MAX</div>
+          <div class="tstat-val" id="tmax-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-hot" id="tmax-bar" style="width:0%"></div></div>
         </div>
-        <div class="ring-stats">
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--orange)">MAX</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="tmax-bar-seg" style="color:var(--red)"></div></div>
-            <span class="rstat-val" style="color:var(--orange)" id="tmax-val">--</span>
-          </div>
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--yellow)">CUR</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="tcur-bar-seg" style="color:var(--orange)"></div></div>
-            <span class="rstat-val" style="color:var(--yellow)" id="tcur-val">--</span>
-          </div>
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--blue)">MIN</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="tmin-bar-seg" style="color:var(--blue)"></div></div>
-            <span class="rstat-val" style="color:var(--blue)" id="tmin-val">--</span>
-          </div>
-          <div class="trend-row">
-            <span class="trend-label">LIVE STREAM</span>
-            <div class="trend-vals" id="t-trend">
-              <span class="trend-v tv-up">--</span>
-              <span class="trend-v tv-mid">--</span>
-              <span class="trend-v tv-dn">--</span>
-            </div>
-          </div>
+        <div class="tstat">
+          <div class="tstat-label">● CUR</div>
+          <div class="tstat-val" id="tcur-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-hot" id="tcur-bar" style="width:0%"></div></div>
+        </div>
+        <div class="tstat">
+          <div class="tstat-label">▼ MIN</div>
+          <div class="tstat-val" id="tmin-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-cold" id="tmin-bar" style="width:0%"></div></div>
         </div>
       </div>
     </div>
 
-    <!-- Humidity -->
-    <div class="card-base gauge-card" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow"></div>
-      <div class="card-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--cyan)"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z"/></svg>
-        HUMIDITY MODULE
-        <span class="badge" id="hum-status-badge">NORMAL</span>
-      </div>
-      <div class="ring-wrap">
-        <div class="ring-svg-wrap">
-          <svg viewBox="0 0 130 130">
-            <circle class="ring-track" cx="65" cy="65" r="55"/>
-            <circle class="ring-ticks" cx="65" cy="65" r="55"/>
-            <circle class="ring-fill" cx="65" cy="65" r="55" stroke="var(--cyan)" stroke-dasharray="0 345" id="hum-ring"/>
-          </svg>
-          <div class="ring-orbit-layer" id="hum-orbit-layer">
-            <svg viewBox="0 0 130 130">
-              <circle class="orbit-dot" cx="65" cy="10" r="4.5"/>
-            </svg>
-          </div>
-          <div class="ring-center">
-            <span class="ring-val" style="color:var(--cyan)" id="hum-val">--.-</span>
-            <span class="ring-unit">%</span>
-          </div>
+    <!-- HUM CARD -->
+    <div class="card hum-card">
+      <div class="cold-top-bar"></div>
+      <div class="c-corner"></div>
+      <div class="ice-wrap" id="ice-wrap"></div>
+      <!-- Humidity person animation -->
+      <div class="hum-person-wrap" id="hum-person-wrap">
+        <div class="rain-over-person" id="rain-over-person">
+          <!-- JS will build rain drops -->
         </div>
-        <div class="ring-stats">
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--cyan2)">MAX</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="hmax-bar-seg" style="color:var(--cyan2)"></div></div>
-            <span class="rstat-val" style="color:var(--cyan2)" id="hmax-val">--</span>
-          </div>
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--cyan)">CUR</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="hcur-bar-seg" style="color:var(--cyan)"></div></div>
-            <span class="rstat-val" style="color:var(--cyan)" id="hcur-val">--</span>
-          </div>
-          <div class="rstat">
-            <span class="rstat-label" style="color:var(--blue)">MIN</span>
-            <div class="rstat-bar"><div class="seg-bar h-sm" id="hmin-bar-seg" style="color:var(--blue)"></div></div>
-            <span class="rstat-val" style="color:var(--blue)" id="hmin-val">--</span>
-          </div>
-          <div class="trend-row">
-            <span class="trend-label">SENSOR</span>
-            <div class="trend-vals" id="h-trend">
-              <span class="trend-v tv-up">--</span>
-              <span class="trend-v tv-mid">--</span>
-              <span class="trend-v tv-dn">--</span>
-            </div>
-          </div>
+        <svg width="55" height="78" viewBox="0 0 55 78" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <g class="hum-person-body">
+            <!-- Head -->
+            <circle cx="27" cy="14" r="10" fill="#93c5fd" stroke="#3b82f6" stroke-width="1.2"/>
+            <!-- Wet hair drips -->
+            <path d="M20 6 Q19 3 18 5" stroke="#60a5fa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M27 4 Q27 1 26 3" stroke="#60a5fa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <path d="M34 6 Q35 3 36 5" stroke="#60a5fa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+            <!-- Face: surprised / miserable -->
+            <circle cx="23" cy="13" r="1.8" fill="#1e3a5f"/>
+            <circle cx="31" cy="13" r="1.8" fill="#1e3a5f"/>
+            <!-- Frown -->
+            <path d="M22 19 Q27 17 32 19" stroke="#1e3a5f" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+            <!-- Body (soaked shirt clingy look) -->
+            <rect x="17" y="26" width="22" height="27" rx="4" fill="#93c5fd" stroke="#3b82f6" stroke-width="1"/>
+            <!-- Wet patches darker -->
+            <ellipse cx="27" cy="32" rx="8" ry="7" fill="rgba(59,130,246,0.35)"/>
+            <!-- Arms spread helpless -->
+            <rect x="5" y="28" width="11" height="5" rx="2.5" fill="#93c5fd" stroke="#3b82f6" stroke-width="1" transform="rotate(15,10,30)"/>
+            <rect x="39" y="28" width="11" height="5" rx="2.5" fill="#93c5fd" stroke="#3b82f6" stroke-width="1" transform="rotate(-15,44,30)"/>
+            <!-- Legs -->
+            <rect x="19" y="51" width="7" height="16" rx="3" fill="#93c5fd" stroke="#3b82f6" stroke-width="1"/>
+            <rect x="29" y="51" width="7" height="16" rx="3" fill="#93c5fd" stroke="#3b82f6" stroke-width="1"/>
+            <!-- Puddle under feet -->
+            <ellipse cx="27" cy="69" rx="14" ry="3.5" fill="rgba(59,130,246,0.3)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="hum-label">
+        ❄️ HUMIDITY MODULE
+        <span class="hum-badge" id="hum-status-badge">NORMAL</span>
+      </div>
+      <div>
+        <span class="big-hum-num" id="hum-val">--.-</span><span class="big-hum-unit">%</span>
+      </div>
+      <div class="hum-stats">
+        <div class="tstat">
+          <div class="tstat-label" style="color:rgba(0,200,255,0.5)">▲ MAX</div>
+          <div class="tstat-val" style="color:var(--cold1)" id="hmax-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-cold" id="hmax-bar" style="width:0%"></div></div>
+        </div>
+        <div class="tstat">
+          <div class="tstat-label" style="color:rgba(0,200,255,0.5)">● CUR</div>
+          <div class="tstat-val" style="color:var(--cold1)" id="hcur-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-cold" id="hcur-bar" style="width:0%"></div></div>
+        </div>
+        <div class="tstat">
+          <div class="tstat-label" style="color:rgba(0,200,255,0.5)">▼ MIN</div>
+          <div class="tstat-val" style="color:var(--cold1)" id="hmin-val">--</div>
+          <div class="mini-bar"><div class="mini-bar-fill mb-cold" id="hmin-bar" style="width:0%"></div></div>
         </div>
       </div>
     </div>
 
-    <!-- Overview -->
-    <div class="card-base gauge-card overview-card" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow"></div>
-      <div class="card-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--cyan)"><path d="M3 3h18v18H3V3zm2 2v14h14V5H5zm2 2h10v2H7V7zm0 4h10v2H7v-2zm0 4h7v2H7v-2z"/></svg>
-        READINGS OVERVIEW
+    <!-- OVERVIEW -->
+    <div class="card overview-card">
+      <div class="ov-top-bar"></div>
+      <div class="c-corner"></div>
+      <div class="ov-count-wrap">
+        <span class="ov-count-num" id="ov-count">--</span>
+        <div class="ov-count-label">TOTAL READINGS LOGGED</div>
       </div>
-      <div class="ov-big" id="ov-count">--</div>
-      <div class="ov-sub">TOTAL READINGS LOGGED</div>
       <div class="ov-divider"></div>
-      <div class="ov-row" style="margin-bottom:12px;">
-        <div class="ov-item">
-          <label>HEAT INDEX</label>
-          <span style="color:var(--orange);font-size:20px;font-family:var(--head);font-weight:700;" id="ov-hi">-- °C</span>
-        </div>
-        <div class="ov-item" style="text-align:right;">
-          <label>POLL INTERVAL</label>
-          <span>5s</span>
-        </div>
+      <div class="ov-item">
+        <label>HEAT INDEX</label>
+        <div class="ov-hi" id="ov-hi">-- °C</div>
       </div>
-      <div class="ov-row">
-        <div class="ov-item"><label>DEVICE</label><span class="online-pill">● ONLINE</span></div>
-        <div class="ov-item" style="text-align:right;"><label>LAST SYNC</label><span id="ov-sync" style="color:var(--text-dim);font-size:10px;">--</span></div>
+      <div class="ov-item">
+        <label>POLL INTERVAL</label>
+        <span>5s</span>
+      </div>
+      <div class="ov-item">
+        <label>DEVICE STATUS</label>
+        <span class="online-pill"><span style="color:var(--green)">●</span> ONLINE</span>
+      </div>
+      <div class="ov-sync-row">
+        <label>LAST SYNC</label>
+        <span id="ov-sync">--</span>
       </div>
     </div>
   </div>
 
-  <!-- ═══ ALT METRICS ═══ -->
-  <div class="gauge-row" style="margin-bottom:28px;">
+  <!-- ALT METRICS -->
+  <div class="alt-row">
 
     <!-- UV -->
-    <div class="card-base alt-card" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow" style="background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(240,192,64,0.05), transparent)"></div>
-      <div class="card-label">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--yellow)" stroke="var(--yellow)" stroke-width="1.5" stroke-linecap="round">
-          <circle cx="12" cy="12" r="4" fill="var(--yellow)" stroke="none"/>
-          <line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/>
-          <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
-          <line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
-        </svg>
-        UV INDEX
-      </div>
-      <div class="alt-ring-wrap">
-        <div class="alt-ring">
-          <svg viewBox="0 0 106 106">
-            <circle class="ring-track" cx="53" cy="53" r="45" stroke-width="6"/>
-            <circle class="ring-ticks" cx="53" cy="53" r="45" stroke-width="2" stroke-dasharray="2 15"/>
-            <circle class="ring-fill" cx="53" cy="53" r="45" stroke="var(--yellow)" stroke-width="6" id="uv-ring" stroke-dasharray="0 283"/>
+    <div class="card alt-card uv-card">
+      <div class="card-top-line"></div>
+      <div class="c-corner"></div>
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:3px;color:rgba(240,192,0,0.5);margin-bottom:14px;">☀ UV INDEX</div>
+      <div class="alt-inner">
+        <div class="alt-ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="arc-track" cx="50" cy="50" r="42"/>
+            <circle class="arc-ticks" cx="50" cy="50" r="42"/>
+            <circle class="arc-fill" cx="50" cy="50" r="42" stroke="#f0c040" stroke-dasharray="0 264" id="uv-arc"/>
           </svg>
-          <div class="alt-ring-orbit" id="uv-orbit">
-            <svg viewBox="0 0 106 106">
-              <circle cx="53" cy="8" r="4" fill="white" style="filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px var(--yellow))"/>
+          <!-- Sun rays animation instead of orbit dot -->
+          <div class="uv-sun-anim">
+            <svg viewBox="0 0 100 100">
+              <line class="sun-ray" x1="50" y1="2" x2="50" y2="12" style="animation-delay:0s"/>
+              <line class="sun-ray" x1="50" y1="88" x2="50" y2="98" style="animation-delay:.15s"/>
+              <line class="sun-ray" x1="2" y1="50" x2="12" y2="50" style="animation-delay:.3s"/>
+              <line class="sun-ray" x1="88" y1="50" x2="98" y2="50" style="animation-delay:.45s"/>
+              <line class="sun-ray" x1="14" y1="14" x2="22" y2="22" style="animation-delay:.6s"/>
+              <line class="sun-ray" x1="78" y1="78" x2="86" y2="86" style="animation-delay:.75s"/>
+              <line class="sun-ray" x1="86" y1="14" x2="78" y2="22" style="animation-delay:.9s"/>
+              <line class="sun-ray" x1="14" y1="86" x2="22" y2="78" style="animation-delay:1.05s"/>
             </svg>
           </div>
-          <div class="alt-ring-center">
-            <span class="alt-ring-val" style="color:var(--yellow)" id="uv-val">--</span>
-            <span class="alt-ring-unit">INDEX</span>
+          <!-- Chase ring pulse -->
+          <div class="ring-pulse-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="rp-circle" cx="50" cy="50" r="42" stroke="rgba(240,192,0,0.4)" style="--rp-dur:2.8s;"/>
+            </svg>
+          </div>
+          <div class="arc-center">
+            <span class="arc-val" style="color:#f0c040" id="uv-val">--</span>
+            <span class="arc-unit">INDEX</span>
           </div>
         </div>
         <div class="alt-info">
-          <div class="alt-status" style="color:var(--yellow)" id="uv-status">--</div>
+          <div class="alt-status" style="color:#f0c040" id="uv-status">--</div>
           <div class="alt-desc" id="uv-desc">--</div>
         </div>
       </div>
-      <div class="alt-bar-wrap">
+      <div class="alt-bar-section">
         <div class="alt-bar-label">UV / 11 SCALE</div>
-        <div class="seg-bar h-md" id="uv-bar-seg" style="color:var(--yellow)"></div>
+        <div class="seg-bar" id="uv-bar" style="color:#f0c040"></div>
       </div>
     </div>
 
-    <!-- Wind -->
-    <div class="card-base alt-card wind" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow" style="background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(34,170,255,0.05), transparent)"></div>
-      <div class="card-label">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round">
-          <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M10.59 19.41A2 2 0 1 0 14 16H2"/><path d="M15.73 7.73A2.5 2.5 0 1 1 19.5 12H2"/>
-        </svg>
-        WIND SPEED
-      </div>
-      <div class="alt-ring-wrap">
-        <div class="alt-ring">
-          <svg viewBox="0 0 106 106">
-            <circle class="ring-track" cx="53" cy="53" r="45" stroke-width="6"/>
-            <circle class="ring-ticks" cx="53" cy="53" r="45" stroke-width="2" stroke-dasharray="2 15"/>
-            <circle class="ring-fill" cx="53" cy="53" r="45" stroke="var(--blue)" stroke-width="6" id="wind-ring" stroke-dasharray="0 283"/>
+    <!-- WIND -->
+    <div class="card alt-card wind-card">
+      <div class="card-top-line"></div>
+      <div class="c-corner"></div>
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:3px;color:rgba(0,200,255,0.5);margin-bottom:14px;">💨 WIND SPEED</div>
+      <div class="alt-inner">
+        <div class="alt-ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="arc-track" cx="50" cy="50" r="42"/>
+            <circle class="arc-ticks" cx="50" cy="50" r="42"/>
+            <circle class="arc-fill" cx="50" cy="50" r="42" stroke="var(--cold1)" stroke-dasharray="0 264" id="wind-arc"/>
           </svg>
-          <div class="alt-ring-orbit" id="wind-orbit">
-            <svg viewBox="0 0 106 106">
-              <circle cx="53" cy="8" r="4" fill="white" style="filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px var(--blue))"/>
+          <!-- Anemometer animation -->
+          <div class="wind-anim">
+            <svg viewBox="0 0 100 100">
+              <g class="anemometer-group" id="anemometer-group">
+                <!-- Center hub -->
+                <circle cx="50" cy="50" r="4" fill="rgba(0,200,255,0.8)"/>
+                <!-- Arms -->
+                <line x1="50" y1="50" x2="50" y2="16" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/>
+                <line x1="50" y1="50" x2="79" y2="66" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/>
+                <line x1="50" y1="50" x2="21" y2="66" stroke="rgba(0,200,255,0.5)" stroke-width="1.5"/>
+                <!-- Cups -->
+                <path d="M46 10 Q50 6 54 10 Q58 14 50 16 Q42 14 46 10Z" fill="rgba(0,200,255,0.7)"/>
+                <path d="M75 62 Q80 58 82 63 Q84 68 77 70 Q72 68 75 62Z" fill="rgba(0,200,255,0.7)"/>
+                <path d="M18 62 Q14 58 18 55 Q23 52 24 58 Q24 64 18 62Z" fill="rgba(0,200,255,0.7)"/>
+              </g>
             </svg>
           </div>
-          <div class="alt-ring-center">
-            <span class="alt-ring-val" style="color:var(--blue)" id="wind-val">--</span>
-            <span class="alt-ring-unit">km/h</span>
+          <!-- Chase ring -->
+          <div class="ring-pulse-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="rp-circle" cx="50" cy="50" r="42" stroke="rgba(0,200,255,0.4)" style="--rp-dur:3s;"/>
+            </svg>
+          </div>
+          <div class="arc-center">
+            <span class="arc-val" style="color:var(--cold1)" id="wind-val">--</span>
+            <span class="arc-unit">km/h</span>
           </div>
         </div>
         <div class="alt-info">
-          <div class="alt-status" style="color:var(--blue)" id="wind-status">--</div>
+          <div class="alt-status" style="color:var(--cold1)" id="wind-status">--</div>
           <div class="alt-desc" id="wind-desc">--</div>
+          <!-- Wind person blown back -->
+          <div class="wind-person-wrap">
+            <svg width="100%" height="55" viewBox="0 0 160 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Wind lines -->
+              <line class="wind-line-anim" x1="0" y1="20" x2="40" y2="20" style="--wldel:0s"/>
+              <line class="wind-line-anim" x1="0" y1="28" x2="55" y2="28" style="--wldel:.3s"/>
+              <line class="wind-line-anim" x1="0" y1="36" x2="35" y2="36" style="--wldel:.6s"/>
+              <line class="wind-line-anim" x1="0" y1="14" x2="45" y2="14" style="--wldel:.9s"/>
+              <!-- Blown person leaning -->
+              <g class="blown-person">
+                <!-- Feet anchored -->
+                <ellipse cx="122" cy="52" rx="6" ry="3" fill="#7c3aed" opacity=".8"/>
+                <ellipse cx="136" cy="52" rx="6" ry="3" fill="#7c3aed" opacity=".8"/>
+                <!-- Legs bent forward -->
+                <rect x="118" y="38" width="6" height="16" rx="3" fill="#f4a261" transform="rotate(-10,121,46)"/>
+                <rect x="130" y="38" width="6" height="16" rx="3" fill="#f4a261" transform="rotate(-5,133,46)"/>
+                <!-- Body leaning -->
+                <rect x="116" y="20" width="18" height="20" rx="5" fill="#f9c784" transform="rotate(-15,125,30)"/>
+                <!-- Head -->
+                <circle cx="120" cy="14" r="9" fill="#f4a261" transform="rotate(-15,120,14)"/>
+                <!-- Face: scared eyes -->
+                <circle cx="117" cy="12" r="1.8" fill="#3d2b1f"/>
+                <circle cx="124" cy="11" r="1.8" fill="#3d2b1f"/>
+                <circle cx="120" cy="16" r="1.5" fill="none" stroke="#3d2b1f" stroke-width="1"/>
+                <!-- Hair blowing -->
+                <path d="M113 8 Q108 4 105 7 Q103 10 107 11" stroke="#e07b39" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <path d="M115 6 Q112 1 109 4" stroke="#e07b39" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                <!-- Arms blown up -->
+                <rect x="108" y="18" width="10" height="5" rx="2.5" fill="#f4a261" transform="rotate(-40,113,20)"/>
+                <rect x="134" y="18" width="10" height="5" rx="2.5" fill="#f4a261" transform="rotate(30,139,20)"/>
+              </g>
+            </svg>
+          </div>
         </div>
       </div>
-      <div class="alt-bar-wrap">
-        <div class="alt-bar-label">SPEED / 120 KM/H</div>
-        <div class="seg-bar h-md" id="wind-bar-seg" style="color:var(--blue)"></div>
+      <div class="alt-bar-section">
+        <div class="alt-bar-label">SPEED / 120 km/h</div>
+        <div class="seg-bar" id="wind-bar" style="color:var(--cold1)"></div>
       </div>
     </div>
 
-    <!-- Rain -->
-    <div class="card-base alt-card rain" style="grid-column:span 2;">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow" style="background:radial-gradient(ellipse 70% 50% at 50% 0%, rgba(42,255,136,0.05), transparent)"></div>
-      <div class="card-label">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round">
-          <path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/>
-          <line x1="8" y1="19" x2="8" y2="21"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="16" y1="19" x2="16" y2="21"/>
-        </svg>
-        RAIN FORECAST
-      </div>
-      <div class="alt-ring-wrap">
-        <div class="alt-ring">
-          <svg viewBox="0 0 106 106">
-            <circle class="ring-track" cx="53" cy="53" r="45" stroke-width="6"/>
-            <circle class="ring-ticks" cx="53" cy="53" r="45" stroke-width="2" stroke-dasharray="2 15"/>
-            <circle class="ring-fill" cx="53" cy="53" r="45" stroke="var(--green)" stroke-width="6" id="rain-ring" stroke-dasharray="0 283"/>
+    <!-- RAIN -->
+    <div class="card alt-card rain-card">
+      <div class="card-top-line"></div>
+      <div class="c-corner"></div>
+      <div style="font-family:var(--mono);font-size:8px;letter-spacing:3px;color:rgba(0,255,136,0.5);margin-bottom:14px;">🌧 RAIN FORECAST</div>
+      <div class="alt-inner">
+        <div class="alt-ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="arc-track" cx="50" cy="50" r="42"/>
+            <circle class="arc-ticks" cx="50" cy="50" r="42"/>
+            <circle class="arc-fill" cx="50" cy="50" r="42" stroke="var(--green)" stroke-dasharray="0 264" id="rain-arc"/>
           </svg>
-          <div class="alt-ring-orbit" id="rain-orbit">
-            <svg viewBox="0 0 106 106">
-              <circle cx="53" cy="8" r="4" fill="white" style="filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 8px var(--green))"/>
+          <!-- Falling rain drops around ring -->
+          <div class="rain-anim">
+            <svg viewBox="0 0 100 100">
+              <line class="rdrop" x1="30" y1="10" x2="28" y2="22" style="--rdur:0.9s;--rdel:0s;"/>
+              <line class="rdrop" x1="50" y1="8" x2="48" y2="20" style="--rdur:1.1s;--rdel:0.2s;"/>
+              <line class="rdrop" x1="70" y1="10" x2="68" y2="22" style="--rdur:0.8s;--rdel:0.4s;"/>
+              <line class="rdrop" x1="85" y1="30" x2="83" y2="42" style="--rdur:1.0s;--rdel:0.1s;"/>
+              <line class="rdrop" x1="92" y1="50" x2="90" y2="62" style="--rdur:0.9s;--rdel:0.6s;"/>
+              <line class="rdrop" x1="82" y1="72" x2="80" y2="84" style="--rdur:1.2s;--rdel:0.3s;"/>
+              <line class="rdrop" x1="15" y1="30" x2="13" y2="42" style="--rdur:0.85s;--rdel:0.5s;"/>
+              <line class="rdrop" x1="8" y1="50" x2="6" y2="62" style="--rdur:1.0s;--rdel:0.7s;"/>
+              <line class="rdrop" x1="18" y1="72" x2="16" y2="84" style="--rdur:0.9s;--rdel:0.2s;"/>
             </svg>
           </div>
-          <div class="alt-ring-center">
-            <span class="alt-ring-val" style="color:var(--green)" id="rain-val">--</span>
-            <span class="alt-ring-unit">%</span>
+          <!-- Chase ring -->
+          <div class="ring-pulse-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="rp-circle" cx="50" cy="50" r="42" stroke="rgba(0,255,136,0.4)" style="--rp-dur:3.5s;"/>
+            </svg>
+          </div>
+          <div class="arc-center">
+            <span class="arc-val" style="color:var(--green)" id="rain-val">--</span>
+            <span class="arc-unit">%</span>
           </div>
         </div>
         <div class="alt-info">
@@ -925,24 +881,24 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
           <div class="alt-desc" id="rain-desc">--</div>
         </div>
       </div>
-      <div class="alt-bar-wrap">
+      <div class="alt-bar-section">
         <div class="alt-bar-label">PROBABILITY</div>
-        <div class="seg-bar h-md" id="rain-bar-seg" style="color:var(--green)"></div>
+        <div class="seg-bar" id="rain-bar" style="color:var(--green)"></div>
       </div>
     </div>
   </div>
 
-  <!-- ═══ SECTION 2: CHARTS ═══ -->
-  <div class="section-hdr" id="live-section">
+  <!-- CHARTS -->
+  <div class="section-hdr">
     <h2>Live Sensor Feed</h2>
     <span class="section-tag">DHT11</span>
     <div class="section-hdr-line"></div>
   </div>
 
   <div class="chart-row">
-    <div class="card-base chart-card">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow hot"></div>
+    <div class="card chart-card">
+      <div class="chart-top-hot"></div>
+      <div class="c-corner"></div>
       <div class="chart-hdr">
         <div>
           <div class="chart-title">TEMPERATURE</div>
@@ -956,9 +912,9 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
       </div>
       <div class="chart-canvas-wrap"><canvas id="tempChart"></canvas></div>
     </div>
-    <div class="card-base chart-card hum">
-      <div class="card-corners"></div>
-      <div class="card-inner-glow"></div>
+    <div class="card chart-card">
+      <div class="chart-top-cold"></div>
+      <div class="c-corner"></div>
       <div class="chart-hdr">
         <div>
           <div class="chart-title">HUMIDITY</div>
@@ -974,42 +930,42 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
     </div>
   </div>
 
-  <!-- ═══ SECTION 3: CORRELATION ═══ -->
-  <div class="section-hdr" id="corr-section">
+  <!-- CORRELATION -->
+  <div class="section-hdr">
     <h2>T &amp; H Correlation</h2>
     <span class="section-tag">DUAL-AXIS</span>
     <div class="section-hdr-line"></div>
   </div>
 
-  <div class="card-base corr-card">
-    <div class="card-corners"></div>
-    <div class="card-inner-glow"></div>
+  <div class="card corr-card">
+    <div class="corr-top"></div>
+    <div class="c-corner"></div>
     <div class="corr-hdr">
       <div>
-        <div style="font-family:var(--head);font-size:10px;font-weight:700;letter-spacing:4px;color:var(--text);">CORRELATION ANALYSIS</div>
-        <div style="font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);margin-top:4px;">Real-time dual-axis overlay</div>
+        <div class="corr-title">CORRELATION ANALYSIS</div>
+        <div class="corr-sub">REAL-TIME DUAL-AXIS OVERLAY</div>
       </div>
       <div class="corr-legend">
-        <div class="cleg"><div class="cleg-dot" style="background:var(--orange)"></div>Temperature</div>
-        <div class="cleg"><div class="cleg-dot" style="background:var(--cyan)"></div>Humidity</div>
+        <div class="cleg"><div class="cleg-dot" style="background:var(--hot1)"></div>Temperature</div>
+        <div class="cleg"><div class="cleg-dot" style="background:var(--cold1)"></div>Humidity</div>
       </div>
     </div>
     <div class="corr-canvas-wrap"><canvas id="corrChart"></canvas></div>
   </div>
 
-  <!-- ═══ SECTION 4: LOGS ═══ -->
-  <div class="section-hdr" id="logs-section" style="margin-top:28px;">
+  <!-- LOGS -->
+  <div class="section-hdr" style="margin-top:20px;">
     <h2>Sensor Logs &amp; History</h2>
     <span class="section-tag">HISTORICAL</span>
     <div class="section-hdr-line"></div>
   </div>
 
-  <div class="card-base logs-card">
-    <div class="card-corners"></div>
-    <div class="card-inner-glow"></div>
+  <div class="card logs-card">
+    <div class="logs-top"></div>
+    <div class="c-corner"></div>
     <div class="logs-hdr">
       <h3>RECENT READINGS</h3>
-      <input class="logs-search" type="text" placeholder="⌕  Search date, temperature, humidity..." id="search-input" oninput="filterTable()"/>
+      <input class="logs-search" type="text" placeholder="⌕  Search date, temperature, humidity…" id="search-input" oninput="filterTable()"/>
       <button class="export-btn" onclick="exportCSV()">⬇ EXPORT CSV</button>
     </div>
     <div class="table-wrap">
@@ -1034,456 +990,315 @@ td.col-ts   { color: var(--text-dim); font-size: 10px; }
 <div id="toast"></div>
 
 <script>
-/* ════════════ CONFIG ════════════ */
-const SUPABASE_URL = 'https://nwbccofgphwzorhyfktv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53YmNjb2ZncGh3em9yaHlma3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4ODE0NzUsImV4cCI6MjA5MTQ1NzQ3NX0.kAX6NQIb4dbukLEePM26YTGURb3IoJ5VZmL5De0a4Io';
-const TABLE = 'sensor_readings';
-const FETCH_INTERVAL_MS = 5000;
-const MAX_CHART_POINTS  = 100;
+/* ══ CONFIG ══ */
+const SUPABASE_URL='https://nwbccofgphwzorhyfktv.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53YmNjb2ZncGh3em9yaHlma3R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4ODE0NzUsImV4cCI6MjA5MTQ1NzQ3NX0.kAX6NQIb4dbukLEePM26YTGURb3IoJ5VZmL5De0a4Io';
+const TABLE='sensor_readings';
+const FETCH_INTERVAL_MS=5000;
+const MAX_CHART=100;
 
-/* ════════════ STATE ════════════ */
-let allReadings = [], filteredReadings = [];
-let page = 1;
-const PAGE_SIZE = 20;
-let tempWindow = 30, humWindow = 30;
-let tempChart, humChart, corrChart;
-let startTime = Date.now();
-let simUV = 0, simWind = 3, simRain = 10;
+let allReadings=[],filteredReadings=[];
+let page=1;const PAGE_SIZE=20;
+let tempWindow=30,humWindow=30;
+let tempChart,humChart,corrChart;
+let startTime=Date.now();
+let simUV=0,simWind=3,simRain=10;
 
-/* ════════════ SEG BAR ════════════ */
-const SEG_COUNT = 20;
-
-function buildSegBar(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.innerHTML = '';
-  for (let i = 0; i < SEG_COUNT; i++) {
-    const s = document.createElement('div');
-    s.className = 'seg';
-    el.appendChild(s);
+/* ══ BUILD PARTICLES ══ */
+function buildFireParticles(){
+  const wrap=document.getElementById('fire-wrap');
+  const colors=['#ff3d00','#ff6e00','#ffaa00','#ffcc02','#ff5500'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');p.className='fire-particle';
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    p.style.cssText=`left:${Math.random()*100}%;background:${c};box-shadow:0 0 8px ${c};--dur:${(1.5+Math.random()*2).toFixed(2)}s;--delay:${(Math.random()*2).toFixed(2)}s;--dx:${(Math.random()*30-15).toFixed(0)}px;--dx2:${(Math.random()*40-20).toFixed(0)}px;width:${(2+Math.random()*5).toFixed(0)}px;height:${(2+Math.random()*5).toFixed(0)}px;`;
+    wrap.appendChild(p);
+  }
+}
+function buildIceParticles(){
+  const wrap=document.getElementById('ice-wrap');
+  for(let i=0;i<22;i++){
+    const p=document.createElement('div');p.className='ice-crystal';
+    const hue=Math.random()>0.5?'#00c8ff':'#a855f7';
+    p.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*30}%;background:${hue};box-shadow:0 0 6px ${hue};--dur:${(2+Math.random()*3).toFixed(2)}s;--delay:${(Math.random()*3).toFixed(2)}s;width:${(2+Math.random()*4).toFixed(0)}px;height:${(2+Math.random()*4).toFixed(0)}px;`;
+    wrap.appendChild(p);
+  }
+}
+function buildRainDropsOnPerson(){
+  const wrap=document.getElementById('rain-over-person');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  for(let i=0;i<12;i++){
+    const d=document.createElement('div');d.className='rain-drop';
+    d.style.cssText=`left:${(Math.random()*50+2)}px;height:${8+Math.random()*6}px;--rd:${(0.4+Math.random()*0.5).toFixed(2)}s;--rdelay:${(Math.random()*1.2).toFixed(2)}s;`;
+    wrap.appendChild(d);
   }
 }
 
-function setSegBar(id, pct) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const segs = el.querySelectorAll('.seg');
-  const active = Math.round(Math.min(100, Math.max(0, pct)) / 100 * SEG_COUNT);
-  segs.forEach((s, i) => {
-    if (i < active) {
-      s.classList.add('active');
-      s.classList.toggle('scanning', i === active - 1);
-    } else {
-      s.classList.remove('active', 'scanning');
-    }
-  });
+function updateFireState(temp){
+  const fw=document.getElementById('fire-wrap');
+  const hp=document.getElementById('hot-person-wrap');
+  const hs=document.getElementById('heat-shimmer');
+  if(temp>=30){fw.classList.add('active');hp.classList.add('active');hs.classList.add('active');}
+  else{fw.classList.remove('active');hp.classList.remove('active');hs.classList.remove('active');}
+}
+function updateHumPersonState(hum){
+  const hw=document.getElementById('hum-person-wrap');
+  const iw=document.getElementById('ice-wrap');
+  if(hum>=60){hw.classList.add('active');iw.classList.add('active');}
+  else{hw.classList.remove('active');iw.classList.remove('active');}
 }
 
-/* ════════════ ORBIT SPEED ════════════ */
-function setOrbitSpeed(id, pct) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const dur = 8 - (Math.min(100, pct) / 100) * 6;
-  el.style.animationDuration = `${Math.max(2, dur).toFixed(2)}s`;
+/* ══ WIND ANEMOMETER SPEED ══ */
+function updateAnemometerSpeed(windKmh){
+  const el=document.getElementById('anemometer-group');
+  if(!el)return;
+  // Faster spin for more wind
+  const minDur=0.3,maxDur=5;
+  const dur=Math.max(minDur,maxDur-(windKmh/120)*(maxDur-minDur));
+  el.style.animationDuration=dur.toFixed(2)+'s';
 }
 
-/* ════════════ RING HELPERS ════════════ */
-function setRing(id, pct) {
-  const circ = 345; // 2π×55
-  const el = document.getElementById(id);
-  if (el) el.setAttribute('stroke-dasharray', `${(pct/100)*circ} ${circ}`);
-}
-function setAltRing(id, pct) {
-  const circ = 283; // 2π×45
-  const el = document.getElementById(id);
-  if (el) el.setAttribute('stroke-dasharray', `${(pct/100)*circ} ${circ}`);
+/* ══ SEG BARS ══ */
+const SEG=20;
+function buildSeg(id){const el=document.getElementById(id);if(!el)return;el.innerHTML='';for(let i=0;i<SEG;i++){const s=document.createElement('div');s.className='seg';el.appendChild(s);}}
+function setSeg(id,pct){
+  const el=document.getElementById(id);if(!el)return;
+  const segs=el.querySelectorAll('.seg');
+  const active=Math.round(Math.min(100,Math.max(0,pct))/100*SEG);
+  segs.forEach((s,i)=>{if(i<active){s.classList.add('active');s.classList.toggle('scanning',i===active-1);}else{s.classList.remove('active','scanning');}});
 }
 
-/* ════════════ BOOT LOADER ════════════ */
-function runBootLoader(onComplete) {
-  const loader   = document.getElementById('boot-loader');
-  const bar      = document.getElementById('boot-bar');
-  const pctEl    = document.getElementById('boot-pct');
-  const dotsEl   = document.getElementById('boot-dot-anim');
+/* ══ ARC RINGS ══ */
+function setArc(id,pct){const circ=264;const el=document.getElementById(id);if(el)el.setAttribute('stroke-dasharray',`${(pct/100)*circ} ${circ}`);}
 
-  const PHASES = [
-    { label: 'INITIALIZING SENSORS', duration: 420 },
-    { label: 'CALIBRATING DHT11',    duration: 600 },
-    { label: 'CONNECTING TO ESP32',  duration: 500 },
-    { label: 'LOADING DASHBOARD',    duration: 380 },
-    { label: 'SYSTEM READY',         duration: 300 },
+/* ══ MINI BARS ══ */
+function setMiniBar(id,pct){const el=document.getElementById(id);if(el)el.style.width=`${Math.min(100,Math.max(0,pct)).toFixed(1)}%`;}
+
+/* ══ BOOT SEQUENCE ══ */
+function runBoot(cb){
+  const bar=document.getElementById('boot-bar');
+  const pctEl=document.getElementById('boot-pct');
+  const dotsEl=document.getElementById('boot-dots');
+  const loader=document.getElementById('boot-loader');
+  const PHASES=[
+    {label:'CASTING LINE',dur:450},
+    {label:'WAITING FOR FISH',dur:600},
+    {label:'GOT A BITE!',dur:400},
+    {label:'REELING IN',dur:450},
+    {label:'SYSTEM READY',dur:250},
   ];
-
-  let pct = 0;
-  let phaseIdx = 0;
-  let dotState = 0;
-
-  // Animate dots
-  const dotFrames = ['.', '..', '...', '....'];
-  const dotInterval = setInterval(() => {
-    dotState = (dotState + 1) % dotFrames.length;
-    if (dotsEl) dotsEl.textContent = dotFrames[dotState];
-  }, 280);
-
-  // Update label per phase
-  function updateLabel() {
-    const labelEl = dotsEl ? dotsEl.parentElement : null;
-    if (labelEl && PHASES[phaseIdx]) {
-      // Replace text node (first child)
-      labelEl.childNodes[0].textContent = PHASES[phaseIdx].label;
+  let phaseIdx=0,elapsed=0,dotState=0;
+  const total=PHASES.reduce((s,p)=>s+p.dur,0);
+  const dotFrames=['.','..','...','....'];
+  const dotInt=setInterval(()=>{dotState=(dotState+1)%dotFrames.length;if(dotsEl)dotsEl.textContent=dotFrames[dotState];},280);
+  function updateLabel(){
+    const lbl=PHASES[phaseIdx];
+    if(!lbl)return;
+    const node=dotsEl.parentElement;
+    node.childNodes[0].textContent=lbl.label;
+    // Phase 3: fish is caught - make it jump!
+    if(phaseIdx===2){
+      const fish=document.getElementById('boot-fish');
+      if(fish){fish.style.animation='none';fish.style.bottom='105px';fish.style.transition='bottom .4s ease';}
     }
   }
   updateLabel();
-
-  // Progress animation
-  const totalDuration = PHASES.reduce((s, p) => s + p.duration, 0);
-  let elapsed = 0;
-
-  function tick() {
-    const phase = PHASES[phaseIdx];
-    if (!phase) {
-      // Done
-      clearInterval(dotInterval);
-      pct = 100;
-      bar.style.width = '100%';
-      pctEl.textContent = '100%';
-      setTimeout(() => {
-        loader.classList.add('fade-out');
-        setTimeout(onComplete, 650);
-      }, 200);
-      return;
+  function tick(){
+    const phase=PHASES[phaseIdx];
+    if(!phase){
+      clearInterval(dotInt);bar.style.width='100%';pctEl.textContent='100%';
+      setTimeout(()=>{loader.classList.add('fade-out');setTimeout(cb,700);},200);return;
     }
-
-    const step = 16; // ~60fps
-    elapsed += step;
-    const phasePct = Math.min(elapsed / phase.duration, 1);
-
-    // Calculate overall pct
-    const completedDur = PHASES.slice(0, phaseIdx).reduce((s,p) => s + p.duration, 0);
-    pct = Math.round(((completedDur + phasePct * phase.duration) / totalDuration) * 100);
-
-    bar.style.width = pct + '%';
-    pctEl.textContent = pct + '%';
-
-    if (phasePct >= 1) {
-      elapsed = 0;
-      phaseIdx++;
-      updateLabel();
-    }
-
-    setTimeout(tick, step);
+    const step=16;elapsed+=step;
+    const pp=Math.min(elapsed/phase.dur,1);
+    const done=PHASES.slice(0,phaseIdx).reduce((s,p)=>s+p.dur,0);
+    const pct=Math.round(((done+pp*phase.dur)/total)*100);
+    bar.style.width=pct+'%';pctEl.textContent=pct+'%';
+    if(pp>=1){elapsed=0;phaseIdx++;updateLabel();}
+    setTimeout(tick,step);
   }
-
   tick();
 }
 
-/* ════════════ INIT ════════════ */
-window.addEventListener('DOMContentLoaded', () => {
-  runBootLoader(() => {
-    ['tmax-bar-seg','tcur-bar-seg','tmin-bar-seg',
-     'hmax-bar-seg','hcur-bar-seg','hmin-bar-seg',
-     'uv-bar-seg','wind-bar-seg','rain-bar-seg'].forEach(buildSegBar);
+/* ══ INIT ══ */
+window.addEventListener('DOMContentLoaded',()=>{
+  runBoot(()=>{
+    buildFireParticles();buildIceParticles();buildRainDropsOnPerson();
+    ['uv-bar','wind-bar','rain-bar'].forEach(buildSeg);
     initCharts();
     fetchData();
-    setInterval(fetchData, FETCH_INTERVAL_MS);
-    setInterval(updateUptime, 1000);
-    updateUptime();
+    setInterval(fetchData,FETCH_INTERVAL_MS);
+    setInterval(updateUptime,1000);updateUptime();
     simulateWeather();
-    setInterval(simulateWeather, 15000);
+    setInterval(simulateWeather,15000);
   });
 });
 
-/* ════════════ UPTIME ════════════ */
-function updateUptime() {
-  const s = Math.floor((Date.now() - startTime) / 1000);
-  const h = String(Math.floor(s / 3600)).padStart(2,'0');
-  const m = String(Math.floor((s % 3600) / 60)).padStart(2,'0');
-  const sc = String(s % 60).padStart(2,'0');
-  document.getElementById('uptime').textContent = `${h}:${m}:${sc}`;
+function updateUptime(){
+  const s=Math.floor((Date.now()-startTime)/1000);
+  const h=String(Math.floor(s/3600)).padStart(2,'0');
+  const m=String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sc=String(s%60).padStart(2,'0');
+  document.getElementById('uptime').textContent=`${h}:${m}:${sc}`;
 }
 
-/* ════════════ TOAST ════════════ */
-function toast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = isError ? 'error show' : 'show';
-  setTimeout(() => t.className = '', 2800);
+function toast(msg,isError=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className=isError?'error show':'show';
+  setTimeout(()=>t.className='',2800);
 }
 
-/* ════════════ FETCH ════════════ */
-async function fetchData() {
-  try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=created_at.desc&limit=500`,
-      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-    );
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const prev = allReadings.length;
-    allReadings = data.reverse();
-    const isNew = allReadings.length > prev;
-    updateGauges(allReadings);
-    updateCharts(allReadings);
-    filterTable();
-    document.getElementById('ov-sync').textContent = new Date().toLocaleTimeString();
-    if (isNew && prev > 0) toast('↑ NEW DATA RECEIVED');
-  } catch(e) {
-    document.getElementById('conn-text').textContent = 'OFFLINE';
-    toast('Connection error — retrying…', true);
-    console.error(e);
+/* ══ FETCH ══ */
+async function fetchData(){
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=created_at.desc&limit=500`,
+      {headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    const prev=allReadings.length;
+    allReadings=data.reverse();
+    const isNew=allReadings.length>prev;
+    updateGauges(allReadings);updateCharts(allReadings);filterTable();
+    document.getElementById('ov-sync').textContent=new Date().toLocaleTimeString();
+    if(isNew&&prev>0)toast('↑ NEW DATA RECEIVED');
+  }catch(e){
+    document.getElementById('conn-text').textContent='OFFLINE';
+    toast('Connection error — retrying…',true);console.error(e);
   }
 }
 
-/* ════════════ GAUGES ════════════ */
-function heatIndex(t, h) {
-  if (t < 27) return t;
-  return -8.78469475556 + 1.61139411*t + 2.33854883889*h
-    - 0.14611605*t*h - 0.012308094*t*t - 0.0164248277778*h*h
-    + 0.002211732*t*t*h + 0.00072546*t*h*h - 0.000003582*t*t*h*h;
+/* ══ GAUGES ══ */
+function heatIndex(t,h){
+  if(t<27)return t;
+  return -8.78469475556+1.61139411*t+2.33854883889*h-0.14611605*t*h-0.012308094*t*t-0.0164248277778*h*h+0.002211732*t*t*h+0.00072546*t*h*h-0.000003582*t*t*h*h;
 }
-function tempStatus(t) {
-  if (t >= 35) return ['HOT','sb-hot'];
-  if (t >= 30) return ['WARM','sb-warm'];
-  return ['NORMAL','sb-normal'];
-}
-function humStatus(h) {
-  if (h > 80) return ['HIGH','sb-hot'];
-  if (h < 30) return ['DRY','sb-warm'];
-  return ['NORMAL','sb-normal'];
-}
+function tempStatus(t){if(t>=35)return['HOT','sb-hot'];if(t>=30)return['WARM','sb-warm'];return['NORMAL','sb-normal'];}
+function humStatus(h){if(h>80)return['HIGH','sb-hot'];if(h<30)return['DRY','sb-warm'];return['NORMAL','sb-normal'];}
+function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 
-function updateGauges(data) {
-  if (!data.length) return;
-  const latest = data[data.length - 1];
-  const t = parseFloat(latest.temperature);
-  const h = parseFloat(latest.humidity);
-  const hi = heatIndex(t, h);
+function updateGauges(data){
+  if(!data.length)return;
+  const latest=data[data.length-1];
+  const t=parseFloat(latest.temperature),h=parseFloat(latest.humidity);
+  const hi=heatIndex(t,h);
+  const temps=data.map(d=>parseFloat(d.temperature));
+  const hums=data.map(d=>parseFloat(d.humidity));
+  const tMax=Math.max(...temps),tMin=Math.min(...temps);
+  const hMax=Math.max(...hums),hMin=Math.min(...hums);
 
-  const tPct = Math.min(100, Math.max(0, (t/50)*100));
-  setText('temp-val', t.toFixed(1));
-  setRing('temp-ring', tPct);
-  setOrbitSpeed('temp-orbit-layer', tPct);
-  setText('temp-status-badge', tempStatus(t)[0]);
+  setText('temp-val',t.toFixed(1));setText('hum-val',h.toFixed(1));
+  setText('ov-count',data.length);setText('ov-hi',`${hi.toFixed(1)} °C`);
+  setText('tmax-val',`${tMax.toFixed(1)}°`);setText('tcur-val',`${t.toFixed(1)}°`);setText('tmin-val',`${tMin.toFixed(1)}°`);
+  setMiniBar('tmax-bar',(tMax/50)*100);setMiniBar('tcur-bar',(t/50)*100);setMiniBar('tmin-bar',(tMin/50)*100);
+  setText('hmax-val',`${hMax.toFixed(1)}%`);setText('hcur-val',`${h.toFixed(1)}%`);setText('hmin-val',`${hMin.toFixed(1)}%`);
+  setMiniBar('hmax-bar',hMax);setMiniBar('hcur-bar',h);setMiniBar('hmin-bar',hMin);
 
-  setText('hum-val', h.toFixed(1));
-  setRing('hum-ring', h);
-  setOrbitSpeed('hum-orbit-layer', h);
-  setText('hum-status-badge', humStatus(h)[0]);
+  const [ts]=tempStatus(t);const tb=document.getElementById('temp-status-badge');if(tb)tb.textContent=ts;
+  const [hs]=humStatus(h);const hb=document.getElementById('hum-status-badge');if(hb)hb.textContent=hs;
 
-  const temps = data.map(d => parseFloat(d.temperature));
-  const hums  = data.map(d => parseFloat(d.humidity));
-  const tMax = Math.max(...temps), tMin = Math.min(...temps);
-  const hMax = Math.max(...hums),  hMin = Math.min(...hums);
-
-  setText('tmax-val', `${tMax.toFixed(1)}°`);
-  setText('tcur-val', `${t.toFixed(1)}°`);
-  setText('tmin-val', `${tMin.toFixed(1)}°`);
-  setSegBar('tmax-bar-seg', (tMax/50)*100);
-  setSegBar('tcur-bar-seg', (t/50)*100);
-  setSegBar('tmin-bar-seg', (tMin/50)*100);
-
-  setText('hmax-val', `${hMax.toFixed(0)}%`);
-  setText('hcur-val', `${h.toFixed(0)}%`);
-  setText('hmin-val', `${hMin.toFixed(0)}%`);
-  setSegBar('hmax-bar-seg', hMax);
-  setSegBar('hcur-bar-seg', h);
-  setSegBar('hmin-bar-seg', hMin);
-
-  updateTrend('t-trend', data.slice(-3).map(d => parseFloat(d.temperature)), '°');
-  updateTrend('h-trend', data.slice(-3).map(d => parseFloat(d.humidity)), '%');
-  setText('ov-count', data.length);
-  setText('ov-hi', `${hi.toFixed(1)} °C`);
+  updateFireState(t);
+  updateHumPersonState(h);
 }
 
-function updateTrend(elId, vals, unit) {
-  const el = document.getElementById(elId);
-  if (!el || vals.length < 3) return;
-  el.querySelectorAll('.trend-v').forEach((s, i) => { s.textContent = `${vals[i].toFixed(1)}${unit}`; });
-}
-function setText(id, val) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = val;
-}
+/* ══ SIMULATE WEATHER ══ */
+function simulateWeather(){
+  simUV=+(Math.random()*11).toFixed(1);
+  simWind=Math.floor(Math.random()*120+1);
+  simRain=Math.floor(Math.random()*100);
 
-/* ════════════ SIMULATED WEATHER ════════════ */
-function simulateWeather() {
-  simUV   = +(Math.random() * 11).toFixed(1);
-  simWind = Math.floor(Math.random() * 120 + 1);
-  simRain = Math.floor(Math.random() * 100);
+  const uvPct=(simUV/11)*100;
+  setText('uv-val',simUV.toFixed(1));setArc('uv-arc',uvPct);setSeg('uv-bar',uvPct);
+  const uvL=[[3,'Low — normal','UV at safe levels'],[6,'Moderate','Use sun protection'],[8,'High — caution','Limit outdoor exposure'],[11,'Very High','Minimize time outside']];
+  const [,us,ud]=uvL.find(([m])=>simUV<=m)||uvL[3];setText('uv-status',us);setText('uv-desc',ud);
 
-  const uvPct = (simUV / 11) * 100;
-  setText('uv-val', simUV.toFixed(1));
-  setAltRing('uv-ring', uvPct);
-  setOrbitSpeed('uv-orbit', uvPct);
-  setSegBar('uv-bar-seg', uvPct);
-  const uvL = [[3,'Low — normal drying','UV accelerates evaporation'],[6,'Moderate — caution','Use sun protection outdoors'],[8,'High — limit exposure','Stay shaded during peak hours'],[11,'Very High — danger','Minimize time outdoors']];
-  const [,us,ud] = uvL.find(([m]) => simUV <= m) || uvL[3];
-  setText('uv-status', us); setText('uv-desc', ud);
+  const wPct=(simWind/120)*100;
+  setText('wind-val',simWind);setArc('wind-arc',wPct);setSeg('wind-bar',wPct);
+  const wL=[[5,'Calm','Wind accelerates drying'],[15,'Light Breeze','Pleasant conditions'],[30,'Moderate','Some gusts expected'],[120,'Strong','Secure loose items']];
+  const [,ws,wd]=wL.find(([m])=>simWind<=m)||wL[3];setText('wind-status',ws);setText('wind-desc',wd);
+  updateAnemometerSpeed(simWind);
 
-  const windPct = (simWind / 120) * 100;
-  setText('wind-val', simWind);
-  setAltRing('wind-ring', windPct);
-  setOrbitSpeed('wind-orbit', windPct);
-  setSegBar('wind-bar-seg', windPct);
-  const wL = [[5,'Calm','Wind reduces drying time'],[15,'Light Breeze','Pleasant conditions'],[30,'Moderate','Some gusts possible'],[120,'Strong','Secure loose items']];
-  const [,ws,wd] = wL.find(([m]) => simWind <= m) || wL[3];
-  setText('wind-status', ws); setText('wind-desc', wd);
-
-  setText('rain-val', simRain);
-  setAltRing('rain-ring', simRain);
-  setOrbitSpeed('rain-orbit', simRain);
-  setSegBar('rain-bar-seg', simRain);
-  const rL = [[20,'No rain expected','Safe to hang clothes'],[50,'Slight chance','Keep an eye on the sky'],[75,'Moderate chance','Bring clothes inside soon'],[100,'High chance','Expect rain']];
-  const [,rs,rd] = rL.find(([m]) => simRain <= m) || rL[3];
-  setText('rain-status', rs); setText('rain-desc', rd);
+  setText('rain-val',simRain);setArc('rain-arc',simRain);setSeg('rain-bar',simRain);
+  const rL=[[20,'No rain expected','Safe to hang clothes'],[50,'Slight chance','Keep an eye out'],[75,'Moderate chance','Bring clothes inside'],[100,'High probability','Expect rain soon']];
+  const [,rs,rd]=rL.find(([m])=>simRain<=m)||rL[3];setText('rain-status',rs);setText('rain-desc',rd);
 }
 
-/* ════════════ CHARTS ════════════ */
-const chartDefaults = {
-  responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: 'rgba(3,8,16,0.97)',
-      titleFont: { family: 'Share Tech Mono', size: 10 },
-      bodyFont:  { family: 'Share Tech Mono', size: 11 },
-      borderColor: 'rgba(0,212,180,0.3)', borderWidth: 1,
-      callbacks: { title: ([i]) => i.label }
-    }
-  },
-  scales: {
-    x: {
-      ticks: { color: 'rgba(160,200,190,0.4)', font: { family: 'Share Tech Mono', size: 9 }, maxTicksLimit: 6, maxRotation: 0 },
-      grid: { color: 'rgba(0,212,180,0.04)' }, border: { color: 'transparent' }
-    },
-    y: {
-      ticks: { color: 'rgba(160,200,190,0.4)', font: { family: 'Share Tech Mono', size: 9 } },
-      grid: { color: 'rgba(0,212,180,0.04)' }, border: { color: 'transparent' }
-    }
-  }
-};
+/* ══ CHARTS ══ */
+const tipStyle={backgroundColor:'rgba(4,6,15,0.97)',titleFont:{family:'Space Mono',size:9},bodyFont:{family:'Space Mono',size:10},borderColor:'rgba(0,200,255,0.25)',borderWidth:1};
+const gridCol='rgba(0,200,255,0.04)';
+const tickCol='rgba(160,210,230,0.35)';
+function fmtTime(ts){return new Date(ts).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
-function fmtTime(ts) {
-  return new Date(ts).toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+function initCharts(){
+  const tCtx=document.getElementById('tempChart').getContext('2d');
+  const tGrad=tCtx.createLinearGradient(0,0,0,200);
+  tGrad.addColorStop(0,'rgba(255,61,0,0.35)');tGrad.addColorStop(1,'rgba(255,61,0,0)');
+  tempChart=new Chart(tCtx,{type:'line',data:{labels:[],datasets:[{data:[],borderColor:'#ff5a1e',backgroundColor:tGrad,borderWidth:2,fill:true,tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#ff8c00'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:tipStyle},scales:{x:{ticks:{color:tickCol,font:{family:'Space Mono',size:8},maxTicksLimit:6,maxRotation:0},grid:{color:gridCol},border:{color:'transparent'}},y:{ticks:{color:tickCol,font:{family:'Space Mono',size:8},callback:v=>`${v}°`},grid:{color:gridCol},border:{color:'transparent'},suggestedMin:20,suggestedMax:40}}}});
+
+  const hCtx=document.getElementById('humChart').getContext('2d');
+  const hGrad=hCtx.createLinearGradient(0,0,0,200);
+  hGrad.addColorStop(0,'rgba(0,200,255,0.3)');hGrad.addColorStop(1,'rgba(0,200,255,0)');
+  humChart=new Chart(hCtx,{type:'line',data:{labels:[],datasets:[{data:[],borderColor:'#00c8ff',backgroundColor:hGrad,borderWidth:2,fill:true,tension:.4,pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#00c8ff'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:tipStyle},scales:{x:{ticks:{color:tickCol,font:{family:'Space Mono',size:8},maxTicksLimit:6,maxRotation:0},grid:{color:gridCol},border:{color:'transparent'}},y:{ticks:{color:tickCol,font:{family:'Space Mono',size:8},callback:v=>`${v}%`},grid:{color:gridCol},border:{color:'transparent'},suggestedMin:0,suggestedMax:100}}}});
+
+  const cCtx=document.getElementById('corrChart').getContext('2d');
+  corrChart=new Chart(cCtx,{type:'line',data:{labels:[],datasets:[{label:'Temperature',data:[],borderColor:'#ff5a1e',borderWidth:1.5,fill:false,tension:.4,pointRadius:0,yAxisID:'yT'},{label:'Humidity',data:[],borderColor:'#00c8ff',borderWidth:1.5,fill:false,tension:.4,pointRadius:0,borderDash:[4,3],yAxisID:'yH'}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:false},tooltip:tipStyle},scales:{x:{ticks:{color:tickCol,font:{family:'Space Mono',size:8},maxTicksLimit:8,maxRotation:0},grid:{color:gridCol},border:{color:'transparent'}},yT:{position:'left',ticks:{color:'rgba(255,90,30,0.6)',font:{family:'Space Mono',size:8},callback:v=>`${v}°`},grid:{color:'rgba(255,90,30,0.04)'},border:{color:'transparent'},suggestedMin:20,suggestedMax:40},yH:{position:'right',ticks:{color:'rgba(0,200,255,0.6)',font:{family:'Space Mono',size:8},callback:v=>`${v}%`},grid:{display:false},border:{color:'transparent'},suggestedMin:0,suggestedMax:100}}}});
 }
 
-function initCharts() {
-  const tCtx = document.getElementById('tempChart').getContext('2d');
-  const tGrad = tCtx.createLinearGradient(0, 0, 0, 190);
-  tGrad.addColorStop(0, 'rgba(255,90,30,0.32)');
-  tGrad.addColorStop(1, 'rgba(255,90,30,0)');
-  tempChart = new Chart(tCtx, {
-    type:'line', data:{ labels:[], datasets:[{ data:[], borderColor:'#ff5a1e', backgroundColor:tGrad, borderWidth:1.5, fill:true, tension:.4, pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:'#ff5a1e' }] },
-    options:{ ...chartDefaults, scales:{ ...chartDefaults.scales,
-      y:{ ...chartDefaults.scales.y, suggestedMin:20, suggestedMax:40, ticks:{ ...chartDefaults.scales.y.ticks, callback:v=>`${v}°` } }
-    }}
-  });
-
-  const hCtx = document.getElementById('humChart').getContext('2d');
-  const hGrad = hCtx.createLinearGradient(0, 0, 0, 190);
-  hGrad.addColorStop(0, 'rgba(0,212,180,0.28)');
-  hGrad.addColorStop(1, 'rgba(0,212,180,0)');
-  humChart = new Chart(hCtx, {
-    type:'line', data:{ labels:[], datasets:[{ data:[], borderColor:'#00d4b4', backgroundColor:hGrad, borderWidth:1.5, fill:true, tension:.4, pointRadius:0, pointHoverRadius:4, pointHoverBackgroundColor:'#00d4b4' }] },
-    options:{ ...chartDefaults, scales:{ ...chartDefaults.scales,
-      y:{ ...chartDefaults.scales.y, suggestedMin:0, suggestedMax:100, ticks:{ ...chartDefaults.scales.y.ticks, callback:v=>`${v}%` } }
-    }}
-  });
-
-  const cCtx = document.getElementById('corrChart').getContext('2d');
-  corrChart = new Chart(cCtx, {
-    type:'line',
-    data:{ labels:[], datasets:[
-      { label:'Temperature', data:[], borderColor:'#ff5a1e', borderWidth:1.5, fill:false, tension:.4, pointRadius:0, yAxisID:'yTemp' },
-      { label:'Humidity',    data:[], borderColor:'#00d4b4', borderWidth:1.5, fill:false, tension:.4, pointRadius:0, borderDash:[4,3], yAxisID:'yHum' }
-    ]},
-    options:{
-      responsive:true, maintainAspectRatio:false, animation:{ duration:400 },
-      plugins:{ legend:{ display:false }, tooltip:{ backgroundColor:'rgba(3,8,16,0.97)', titleFont:{family:'Share Tech Mono',size:10}, bodyFont:{family:'Share Tech Mono',size:11}, borderColor:'rgba(0,212,180,0.3)', borderWidth:1 }},
-      scales:{
-        x:{ ticks:{color:'rgba(160,200,190,0.4)',font:{family:'Share Tech Mono',size:9},maxTicksLimit:8,maxRotation:0}, grid:{color:'rgba(0,212,180,0.04)'}, border:{color:'transparent'} },
-        yTemp:{ position:'left', ticks:{color:'rgba(255,90,30,0.7)',font:{family:'Share Tech Mono',size:9},callback:v=>`${v}°`}, grid:{color:'rgba(255,90,30,0.04)'}, border:{color:'transparent'}, suggestedMin:20, suggestedMax:40 },
-        yHum: { position:'right', ticks:{color:'rgba(0,212,180,0.7)',font:{family:'Share Tech Mono',size:9},callback:v=>`${v}%`}, grid:{display:false}, border:{color:'transparent'}, suggestedMin:0, suggestedMax:100 }
-      }
-    }
-  });
+function updateCharts(data){
+  if(!data.length)return;
+  const tSlice=data.slice(-tempWindow);const hSlice=data.slice(-humWindow);const cSlice=data.slice(-MAX_CHART);
+  tempChart.data.labels=tSlice.map(d=>fmtTime(d.created_at));tempChart.data.datasets[0].data=tSlice.map(d=>parseFloat(d.temperature));tempChart.update('none');
+  humChart.data.labels=hSlice.map(d=>fmtTime(d.created_at));humChart.data.datasets[0].data=hSlice.map(d=>parseFloat(d.humidity));humChart.update('none');
+  corrChart.data.labels=cSlice.map(d=>fmtTime(d.created_at));corrChart.data.datasets[0].data=cSlice.map(d=>parseFloat(d.temperature));corrChart.data.datasets[1].data=cSlice.map(d=>parseFloat(d.humidity));corrChart.update('none');
 }
 
-function updateCharts(data) {
-  if (!data.length) return;
-  const tSlice = data.slice(-tempWindow);
-  const hSlice = data.slice(-humWindow);
-  const cSlice = data.slice(-MAX_CHART_POINTS);
-  tempChart.data.labels = tSlice.map(d => fmtTime(d.created_at));
-  tempChart.data.datasets[0].data = tSlice.map(d => parseFloat(d.temperature));
-  tempChart.update('none');
-  humChart.data.labels = hSlice.map(d => fmtTime(d.created_at));
-  humChart.data.datasets[0].data = hSlice.map(d => parseFloat(d.humidity));
-  humChart.update('none');
-  corrChart.data.labels = cSlice.map(d => fmtTime(d.created_at));
-  corrChart.data.datasets[0].data = cSlice.map(d => parseFloat(d.temperature));
-  corrChart.data.datasets[1].data = cSlice.map(d => parseFloat(d.humidity));
-  corrChart.update('none');
-}
-
-function setWindow(type, n, btn) {
-  btn.closest('.chart-tabs').querySelectorAll('.ctab').forEach(b => b.classList.remove('active'));
+function setWindow(type,n,btn){
+  btn.closest('.chart-tabs').querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if (type === 'temp') tempWindow = n; else humWindow = n;
+  if(type==='temp')tempWindow=n;else humWindow=n;
   updateCharts(allReadings);
 }
 
-/* ════════════ TABLE ════════════ */
-function filterTable() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const reversed = [...allReadings].reverse();
-  filteredReadings = q ? reversed.filter(r =>
-    fmtDate(r.created_at).toLowerCase().includes(q) ||
-    String(r.temperature).includes(q) || String(r.humidity).includes(q)) : reversed;
-  page = 1; renderTable();
+/* ══ TABLE ══ */
+function filterTable(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const rev=[...allReadings].reverse();
+  filteredReadings=q?rev.filter(r=>fmtDate(r.created_at).toLowerCase().includes(q)||String(r.temperature).includes(q)||String(r.humidity).includes(q)):rev;
+  page=1;renderTable();
 }
-function fmtDate(ts) {
-  return new Date(ts).toLocaleString('en-US', { month:'numeric', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-}
-function renderTable() {
-  const tbody = document.getElementById('log-tbody');
-  const total = filteredReadings.length;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const slice = filteredReadings.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
-  tbody.innerHTML = slice.map((r, i) => {
-    const idx = total - (page-1)*PAGE_SIZE - i;
-    const t = parseFloat(r.temperature), h = parseFloat(r.humidity);
-    const hi = heatIndex(t, h);
-    const [ts, tsc] = tempStatus(t), [hs, hsc] = humStatus(h);
+function fmtDate(ts){return new Date(ts).toLocaleString('en-US',{month:'numeric',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function renderTable(){
+  const tbody=document.getElementById('log-tbody');
+  const total=filteredReadings.length;const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+  const slice=filteredReadings.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE);
+  tbody.innerHTML=slice.map((r,i)=>{
+    const idx=total-(page-1)*PAGE_SIZE-i;
+    const t=parseFloat(r.temperature),h=parseFloat(r.humidity),hi=heatIndex(t,h);
+    const [ts,tsc]=tempStatus(t),[hs,hsc]=humStatus(h);
     return `<tr${i===0&&page===1?' class="new-row"':''}>
-      <td>${idx}</td>
-      <td class="col-ts">${fmtDate(r.created_at)}</td>
-      <td class="col-temp">${t.toFixed(1)} °C</td>
-      <td class="col-hum">${h.toFixed(1)} %</td>
-      <td class="col-hi">${hi.toFixed(1)} °C</td>
-      <td>${simUV.toFixed(1)}</td>
-      <td>${simWind} km/h</td>
-      <td>${simRain}%</td>
-      <td><span class="status-badge ${tsc}">${ts}</span> <span class="status-badge ${hsc}">${hs}</span></td>
-    </tr>`;
+      <td>${idx}</td><td class="col-ts">${fmtDate(r.created_at)}</td>
+      <td class="col-temp">${t.toFixed(1)} °C</td><td class="col-hum">${h.toFixed(1)} %</td>
+      <td class="col-hi">${hi.toFixed(1)} °C</td><td>${simUV.toFixed(1)}</td>
+      <td>${simWind} km/h</td><td>${simRain}%</td>
+      <td><span class="sbadge ${tsc}">${ts}</span> <span class="sbadge ${hsc}">${hs}</span></td></tr>`;
   }).join('');
-  document.getElementById('pg-info').textContent = `Page ${page} of ${totalPages}`;
-  document.getElementById('pg-prev').disabled = page <= 1;
-  document.getElementById('pg-next').disabled = page >= totalPages;
+  document.getElementById('pg-info').textContent=`Page ${page} of ${totalPages}`;
+  document.getElementById('pg-prev').disabled=page<=1;
+  document.getElementById('pg-next').disabled=page>=totalPages;
 }
-function changePage(dir) { page += dir; renderTable(); }
+function changePage(dir){page+=dir;renderTable();}
 
-/* ════════════ EXPORT ════════════ */
-function exportCSV() {
-  if (!allReadings.length) { toast('No data to export', true); return; }
-  const header = 'Date & Time,Temperature (°C),Humidity (%),Heat Index (°C),UV Index,Wind (km/h),Rain (%)\n';
-  const rows = [...allReadings].reverse().map(r => {
-    const t = parseFloat(r.temperature), h = parseFloat(r.humidity);
+/* ══ EXPORT ══ */
+function exportCSV(){
+  if(!allReadings.length){toast('No data to export',true);return;}
+  const header='Date & Time,Temperature (°C),Humidity (%),Heat Index (°C),UV Index,Wind (km/h),Rain (%)\n';
+  const rows=[...allReadings].reverse().map(r=>{
+    const t=parseFloat(r.temperature),h=parseFloat(r.humidity);
     return `${fmtDate(r.created_at)},${t.toFixed(2)},${h.toFixed(2)},${heatIndex(t,h).toFixed(2)},${simUV.toFixed(1)},${simWind},${simRain}`;
   });
-  const blob = new Blob([header + rows.join('\n')], { type:'text/csv' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `cyberweather_${Date.now()}.csv`; a.click();
+  const blob=new Blob([header+rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`cyberweather_${Date.now()}.csv`;a.click();
   toast('CSV exported successfully');
 }
 </script>

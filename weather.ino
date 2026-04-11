@@ -5,8 +5,8 @@
 #include <WiFiClientSecure.h>
 
 // ========== CONFIGURATION ==========
-const char* ssid = "Salalima wifi 4G";
-const char* password = "salalima424";
+const char* ssid = "POCO X6 Pro 5G";
+const char* password = "pocox6pro5g";
 
 // Supabase
 const char* supabase_url = "https://dlraeoxekddziftmyxqd.supabase.co";
